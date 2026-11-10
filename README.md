@@ -2,106 +2,118 @@
 
 **Try it: [mergeodds.lol](https://mergeodds.lol)**
 
-Paste a GitHub repo. See the odds that a first-time contributor's PR gets merged, why outside PRs get closed, and
-what the maintainers ask for.
+Paste one GitHub repo. About 4 seconds later you see the odds that your first PR there gets merged.
 
-- **Worker:** Hono on Cloudflare Workers (`worker/`). One endpoint: `GET /api/analyze?repo=owner/name`.
-- **UI:** Vite, React, Tailwind, shadcn, motion, and [dither-kit](https://tripwire.sh/dither-kit) charts (`src/`).
-- **Judgment:** [Jev](https://typesafe.ai) answers typed questions about the repo's rules and closed PRs. Every
-  question is in `worker/jev.ts`. The odds and the verdict are plain code in `worker/analyze.ts`.
-- **Shared rules (`shared/`):** three files hold the decisions that more than one place needs.
-  - `shared/check.ts` is the state machine of one check on the page: `idle`, `pending`, `loading`, `done`, `error`,
-    and every move between them. The page puts the state name on `<main data-state>`.
-  - `shared/outcomes.ts` is the table that sorts each outside PR by how it ended (`merged`, `bot_merged`,
-    `merged_elsewhere`, `withdrawn`, `rejected`, `stuck`), and the count that gives each newcomer one group.
-    The API returns the split as `outcomes`.
-  - `shared/rules.ts` holds the grade cut-offs and the verdict table.
-  - The worker decides with these tables and the How it works page prints them, so the two cannot disagree.
-  - `tests/check.test.mjs`, `tests/outcomes.test.mjs` and `tests/rules.test.mjs` cover them.
-    `tests/fixtures/outcomes.json` holds real PRs from 7 checks, with logins replaced by numbers.
+The report shows:
 
-## Run it
+1. The odds, with the range the sample size allows
+2. Six grades: merge rate, first reply, time to merge, PRs left hanging, reasons given, the guide
+3. The kinds and sizes of PR that maintainers merge
+4. The repo's contributing rules, in the order you meet them
+5. The reasons outside PRs got closed
 
-```bash
-cp .dev.vars.example .dev.vars   # then fill in GITHUB_TOKEN and TYPESAFE_API_KEY
-npm install
-npm run dev
-```
+## Run it on your machine
 
-## Check the wording
+You need Node and two keys. Setup takes about 2 minutes. I use Node 26 and have not tested older versions.
+
+1. Copy the env file: `cp .dev.vars.example .dev.vars`
+2. Fill in `GITHUB_TOKEN`. The token needs no scopes, because the app reads public repos.
+3. Fill in `TYPESAFE_API_KEY`. [TypeSafe](https://typesafe.ai) issues it.
+4. Run `npm install`
+5. Run `npm run dev`, then open the address Vite prints
+
+## The five steps of one check
+
+1. **Fetch.** The worker asks GitHub for up to 400 recent PRs and the repo's contributor docs.
+2. **Split.** It drops PRs from staff and bots, and keeps the ones from outsiders.
+3. **Ask.** [Jev](https://typesafe.ai), TypeSafe's classifier, reads the guide and the last comments on closed PRs. It answers hundreds of fixed questions per check, and it writes no text.
+4. **Count.** Plain code turns those answers into odds, six grades and one verdict. No AI writes the verdict.
+5. **Store.** Workers KV keeps the result for 7 days, so repeat checks cost nothing.
+
+The [How it works page](https://mergeodds.lol/how) walks through each step with the numbers of one real check.
+
+## The math
+
+Newcomers are authors with no merged PR in the repo before the days we read: up to 90 days, up to 400 PRs. Each newcomer lands in one group.
+
+- **Merged:** the merge button, one merge bot, or maintainers who landed the same commits another way.
+- **Rejected:** closed without merging.
+- **Stuck:** still open past the day by which 90% of merged outside PRs had merged.
+
+`odds = (merged + 1) / (tried + 2)`, where `tried` is the sum of the three groups.
+
+Four rules shape that number:
+
+1. **Small samples stay modest.** The +1 and +2 stop 3 lucky PRs from reading as 100%. The report prints the 90% Wilson range next to the odds.
+2. **Each newcomer counts once**, with their best ending. Merged beats rejected, and rejected beats stuck.
+3. **PRs the author closed count in no group.** They say nothing about maintainers.
+4. **Under 3 newcomers, the app shows no odds.** It says the repo is too quiet to call.
+
+One limit: Jev reads the newest 60 closed outside PRs. Older PRs the author closed still count as rejected.
+
+Six numbers get grades (A, B, C, D, F). `shared/rules.ts` holds the cut-offs and the verdict table.
+
+## The parts
+
+| Folder | Holds |
+| --- | --- |
+| `worker/` | The API, `GET /api/analyze?repo=owner/name`: GitHub reads, the classifier's questions, the check, storage and limits |
+| `shared/` | The decision tables: PR outcomes, grades, the verdict, and the page's check states |
+| `src/` | The page: Vite, React, Tailwind, shadcn, motion and dither-kit |
+| `tests/` | 28 tests for the math, the limits, the page states and the wording |
+| `.claude/skills/verify-merge-odds/` | Scripts that start the app, drive it like visitors do, and save proof |
+
+The worker decides with the tables in `shared/`, and the How it works page prints those same tables. The page and the code cannot disagree.
+
+## Limits on new checks
+
+Each new check spends GitHub and classifier quota: about half of one cent. Two guards cap that. Stored results pass both.
+
+- **Per visitor:** 5 new checks per minute. The next one answers 429. `ratelimits` in `wrangler.jsonc` sets it.
+- **Per day:** 300 new checks for the whole site. `DAILY_NEW_CHECKS` in `worker/budget.ts` sets it.
+
+## Test it
 
 ```bash
 npm test
 ```
 
-The test reads the text the page shows and fails on em dashes, exclamation marks, "-ly" adverbs, filler words
-and any mention of the engine. It also checks that a count of one reads as singular. Quotes from a repo's guide
-are shown word for word, so the test leaves them alone.
+28 tests run in under one second. They cover:
 
-## Check that a change to the math changes nothing
+1. The math, on 20,000 made-up repos and on 902 real PRs
+2. The daily budget
+3. The page's check states
+4. The wording: no em dashes, no exclamation marks, no "-ly" adverbs, no filler
 
-```bash
-node .claude/skills/verify-merge-odds/scripts/tape.mjs record vitejs/vite apache/spark   # before the change
-node .claude/skills/verify-merge-odds/scripts/tape.mjs replay                            # after it
-```
-
-`record` saves every answer GitHub and the classifier gave for one real check. `replay` runs the worker as it is
-now against those answers, with no network, and prints `SAME` or the fields that differ.
-
-## Deploy
+Before you change the math, record real checks. After the change, replay them.
 
 ```bash
-npx wrangler secret put GITHUB_TOKEN
-npx wrangler secret put TYPESAFE_API_KEY
-npm run deploy
+node .claude/skills/verify-merge-odds/scripts/tape.mjs record vitejs/vite apache/spark
+node .claude/skills/verify-merge-odds/scripts/tape.mjs replay
 ```
 
-`GITHUB_TOKEN` needs no scopes: it only reads public repos. The first deploy creates the KV namespace for
-stored results.
+`record` saves each answer GitHub and the classifier gave. `replay` runs your changed worker against those answers with no network. It prints `SAME`, or the fields that differ.
 
-`wrangler.jsonc` routes the worker to `mergeodds.lol`. To deploy your own copy, put your own domain in `routes`,
-or delete that line and use the workers.dev address wrangler prints.
+## Deploy your own copy
 
-## Limits on new checks
+You need one Cloudflare account. The first deploy takes about 5 minutes.
 
-The site is open to everyone, and each new check spends GitHub and classifier quota. Two guards keep that bounded.
-Stored results cost nothing, so they pass both.
+1. In `wrangler.jsonc`, put your own domain in `routes`. Or delete that line and use the workers.dev address.
+2. Run `npm run build`
+3. Run `npx wrangler deploy --secrets-file .dev.vars`. It uploads the worker and both keys, and it creates the KV namespace.
 
-- **Per visitor:** 5 new checks per minute (`ratelimits` in `wrangler.jsonc`). The sixth answers 429.
-- **Per day:** 300 new checks for the whole site (`DAILY_NEW_CHECKS` in `worker/budget.ts`). After that, new checks
-  answer 429 until midnight UTC, and stored results still open.
+For later deploys, run `npm run deploy`.
 
-## The math
+Two switches for stored results:
 
-A newcomer is an author with no merged PR in the repo before the window (up to 90 days, up to 400 PRs).
-Each newcomer who tried ends one of three ways:
-
-- **merged**: the merge button, a merge bot, or a maintainer who landed the commits another way (Jev reads that),
-- **rejected**: closed without merging, unless the author closed it,
-- **stuck**: still open after the day by which 90% of merged outside PRs had merged.
-
-A newcomer with several PRs counts once, with their best ending: merged beats rejected, and rejected beats stuck.
-A PR the author closed counts in no group: it says nothing about what maintainers do. Jev reads the newest 60
-closed outside PRs, so an older one the author closed still counts as rejected.
-
-`odds = merged / (merged + rejected + stuck)`, shown with a 90% Wilson interval so small samples get a wide range.
-
-The scorecard grades six numbers from A to F: newcomer merge rate, first reply, time to merge, PRs left hanging,
-how often maintainers say why they closed a PR, and how clear the contributing guide is. Each row prints its own
-sum. "What gets merged" splits outside PRs by kind of change (Jev reads each title) and by lines changed.
-
-Jev answers five requests of about 200 ms each: the rules, which guide lines are requirements, which line states
-each rule, what kind of change each PR is, and why each closed PR was closed. Every question is in `worker/jev.ts`.
-
-A checked repo is stored in Workers KV for 7 days (the `RESULTS` binding), and the report says how old it is.
-Add `&fresh=1` to run a new check and replace the stored one. To throw out every stored result after a change to
-the math, bump `VERSION` in `worker/index.ts`.
+- Add `&fresh=1` to one request, and that check runs again.
+- Bump `VERSION` in `worker/index.ts` after you change the math, and the old results stop matching.
 
 ## Credits and licences
 
-The app's own code is under the MIT licence: see `LICENSE`.
+The app's code is under the MIT licence: see `LICENSE`.
 
-- **dither-kit** (`src/components/dither-kit/`): charts, the button and the gradient, copied in from
-  [Boring-Software-Inc/dither-kit](https://github.com/Boring-Software-Inc/dither-kit) with the shadcn CLI. MIT.
+- **dither-kit** (`src/components/dither-kit/`): charts, the button and the gradient, copied in from [Boring-Software-Inc/dither-kit](https://github.com/Boring-Software-Inc/dither-kit) with the shadcn CLI. MIT.
 - **Paper Mono** (`src/assets/fonts/`): the typeface, by Paper. SIL Open Font License: see `OFL.txt` next to it.
-- **Octicons**: the pull request icon, by GitHub. MIT.
+- **Octicons:** the pull request icon, by GitHub. MIT.
+- **Jev:** the classifier, by [TypeSafe](https://typesafe.ai). The worker calls it over the network.
