@@ -200,3 +200,54 @@ function Merged({ a }: { a: Analysis }) {
     </Card>
   );
 }
+
+function Flow({ a }: { a: Analysis }) {
+  const config: ChartConfig = { merged: { label: "Merged", color: "green" }, closed: { label: "Rejected", color: "red" } };
+  return (
+    <Card title="Outside PRs over time" hint={`${a.outside.merged} merged, ${a.outside.closed} rejected`}>
+      <div className="h-56">
+        <BarChart data={a.series} config={config} stackType="stacked" bloom="low">
+          <XAxis dataKey="label" maxTicks={5} />
+          <YAxis />
+          <Legend />
+          <Tooltip labelKey="label" />
+          <Bar dataKey="merged" variant="gradient" />
+          <Bar dataKey="closed" variant="hatched" />
+        </BarChart>
+      </div>
+    </Card>
+  );
+}
+
+function Reasons({ a }: { a: Analysis }) {
+  const title = "Reasons outside PRs got closed";
+  if (!a.closeReasons.length)
+    return (
+      <Card title={title}>
+        <p className="grid h-56 place-items-center text-sm text-muted-foreground">No closed outside PRs to read</p>
+      </Card>
+    );
+  const config: ChartConfig = Object.fromEntries(a.closeReasons.map((r) => [r.reason, { label: r.label, color: REASON_COLOR[r.reason] }]));
+  const total = a.closeReasons.reduce((s, r) => s + r.count, 0);
+  return (
+    <Card title={title} hint={`from ${plural(total, "closing thread")}`}>
+      <div className="flex flex-col items-center gap-6 sm:flex-row">
+        <div className="size-48 shrink-0">
+          <PieChart data={a.closeReasons} config={config} dataKey="count" nameKey="reason" innerRadius={0.55} bloom="low">
+            <Tooltip />
+            <Pie variant="gradient" />
+          </PieChart>
+        </div>
+        <ul className="w-full space-y-2 text-sm">
+          {a.closeReasons.map((r) => (
+            <li key={r.reason} className="flex items-center gap-3">
+              <span className="size-2 shrink-0" style={{ background: `rgb(${PALETTE[REASON_COLOR[r.reason]].line.join(" ")})` }} />
+              <span className="flex-1">{r.label}</span>
+              <span className="text-xs text-muted-foreground">{r.count}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Card>
+  );
+}
