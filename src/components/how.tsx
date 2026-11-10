@@ -240,3 +240,55 @@ function Question() {
     </div>
   );
 }
+
+// ---- step 5: the sum ----
+
+function Count({ to }: { to: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const seen = useInView(ref, VIEW);
+  const v = useMotionValue(0);
+  const text = useTransform(v, (x) => Math.round(x).toString());
+  const still = useReducedMotion();
+  useEffect(() => {
+    if (!seen) return;
+    if (still) return v.set(to);
+    const c = animate(v, to, { duration: 0.8, ease: EASE });
+    return () => c.stop();
+  }, [seen, still, to, v]);
+  return <motion.span ref={ref}>{text}</motion.span>;
+}
+
+function Sum() {
+  return (
+    <Reveal className="rounded-xl border bg-card p-6">
+      <p className="text-xs text-muted-foreground">Example: {EX.name}</p>
+      <p className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-2 text-2xl sm:text-3xl">
+        <span>
+          ({EX.newcomers.merged} + 1) ÷ ({TRIED} + 2)
+        </span>
+        <span className="text-muted-foreground">=</span>
+        <span className="text-5xl font-semibold tracking-tighter text-emerald-400 sm:text-6xl">
+          <Count to={EX.odds} />%
+        </span>
+      </p>
+    </Reveal>
+  );
+}
+
+// ---- step 6: the grades ----
+
+function Grades() {
+  const ref = useRef<HTMLUListElement>(null);
+  const seen = useInView(ref, VIEW);
+  return (
+    <ul ref={ref} className="grid grid-cols-3 gap-x-4 gap-y-6">
+      {EX.grades.map(([label, grade]) => (
+        <li key={label} className="flex flex-col items-start gap-2">
+          {/* the tile plays its fill when it mounts, so mount it once the row is on screen */}
+          <span className="grid size-10">{seen && <GradeTile grade={grade} />}</span>
+          <span className="text-xs text-muted-foreground">{label}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
