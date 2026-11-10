@@ -9,7 +9,7 @@ import {
 import type { ChartConfig, Margins } from "./chart-context"
 import { CommonChartContext } from "./common-context"
 import type { BloomInput } from "./dither-paint"
-import { cn } from "./lib"
+import { cn } from "@/lib/utils"
 import { axisAtAngle, sliceAtAngle } from "./polar"
 import { PolarChartContext, usePolarController } from "./polar-context"
 import { useChartDimensions } from "./use-chart-dimensions"

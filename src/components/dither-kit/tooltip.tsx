@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react"
 import { useState } from "react"
 import { useCommonChart } from "./common-context"
-import { cn } from "./lib"
+import { cn } from "@/lib/utils"
 import { rgb } from "./palette"
 
 export type TooltipVariant = "default" | "frosted-glass"

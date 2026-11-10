@@ -13,7 +13,7 @@ import {
 } from "./chart-context"
 import { CommonChartContext } from "./common-context"
 import type { BloomInput } from "./dither-paint"
-import { cn } from "./lib"
+import { cn } from "@/lib/utils"
 import type { StackType } from "./scales"
 import { useChartDimensions } from "./use-chart-dimensions"
 

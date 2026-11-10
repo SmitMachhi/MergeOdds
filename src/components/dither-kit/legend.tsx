@@ -1,7 +1,7 @@
 "use client"
 
 import { useCommonChart } from "./common-context"
-import { cn } from "./lib"
+import { cn } from "@/lib/utils"
 import { rgb } from "./palette"
 
 /** Series/slice legend. With `isClickable`, each entry toggles its selection.
