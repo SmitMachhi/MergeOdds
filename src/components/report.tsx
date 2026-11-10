@@ -150,3 +150,53 @@ function Scorecard({ a }: { a: Analysis }) {
     </Card>
   );
 }
+
+function Slices({ title, by, rows }: { title: string; by: string; rows: Slice[] }) {
+  return (
+    <div>
+      <h3 className="mb-3 flex items-baseline justify-between text-xs text-muted-foreground">
+        <span>{title}</span>
+        <span>{by}</span>
+      </h3>
+      {rows.length === 0 && <p className="py-2 text-sm text-muted-foreground">Too few PRs to split</p>}
+      <ul className="space-y-3">
+        {rows.map((r, i) => {
+          const rate = Math.round((100 * r.merged) / r.total);
+          return (
+            <li key={r.key}>
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span>
+                  {r.label}
+                  {r.best && <span className="ml-2 rounded-sm border border-emerald-400/40 px-1 text-xs text-emerald-300">best bet</span>}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {r.merged}/{r.total} <span className="ml-2 text-sm text-foreground">{rate}%</span>
+                </span>
+              </div>
+              <div className="mt-2 h-2 text-white/20 dither-25">
+                <motion.div
+                  className={cn("h-full origin-left", r.best ? "bg-emerald-400" : "bg-foreground/75")}
+                  style={{ width: `${rate}%` }}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ ...spring, delay: 0.25 + i * 0.05 }}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function Merged({ a }: { a: Analysis }) {
+  return (
+    <Card title="PRs that get merged here" hint="share of outside PRs maintainers merged">
+      <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
+        <Slices title="By kind of change" by="from each PR title" rows={a.byType} />
+        <Slices title="By size" by="lines changed" rows={a.bySize} />
+      </div>
+    </Card>
+  );
+}
