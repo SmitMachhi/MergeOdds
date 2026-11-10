@@ -3,8 +3,8 @@
 Paste a GitHub repo. See the odds that your PR gets merged.
 
 This repo is being built in the open, one small pull request at a time. Right now the API reads a repo's recent
-pull requests from GitHub and says how many were merged and how many were closed. The questions for the
-classifier are written, and the next pull request asks them.
+pull requests from GitHub and says how many were merged and how many were closed. The code that works out the
+odds, the grades and the verdict is in, with its tests. The next pull request puts it behind the API.
 
 - **Worker:** [Hono](https://hono.dev) on Cloudflare Workers (`worker/`). One endpoint: `GET /api/analyze?repo=owner/name`.
 - **GitHub data:** every read is in `worker/github.ts`: the repo, its contributor docs, and up to 400 recent PRs.
@@ -21,6 +21,34 @@ npm run dev
 ```
 
 `GITHUB_TOKEN` needs no scopes: it only reads public repos.
+
+## Test it
+
+```bash
+npm test
+```
+
+## The math
+
+A newcomer is an author with no merged PR in the repo before the window (up to 90 days, up to 400 PRs).
+Each newcomer who tried ends one of three ways:
+
+- **merged**: the merge button, a merge bot, or a maintainer who landed the commits another way (Jev reads that),
+- **rejected**: closed without merging, unless the author closed it,
+- **stuck**: still open after the day by which 90% of merged outside PRs had merged.
+
+A newcomer with several PRs counts once, with their best ending: merged beats rejected, and rejected beats stuck.
+A PR the author closed counts in no group: it says nothing about what maintainers do. Jev reads the newest 60
+closed outside PRs, so an older one the author closed still counts as rejected.
+
+`odds = merged / (merged + rejected + stuck)`, shown with a 90% Wilson interval so small samples get a wide range.
+
+The scorecard grades six numbers from A to F: newcomer merge rate, first reply, time to merge, PRs left hanging,
+how often maintainers say why they closed a PR, and how clear the contributing guide is. Each row prints its own
+sum. "What gets merged" splits outside PRs by kind of change (Jev reads each title) and by lines changed.
+
+Jev answers five requests of about 200 ms each: the rules, which guide lines are requirements, which line states
+each rule, what kind of change each PR is, and why each closed PR was closed. Every question is in `worker/jev.ts`.
 
 ## Licence
 
