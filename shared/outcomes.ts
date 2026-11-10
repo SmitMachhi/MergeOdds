@@ -32,3 +32,42 @@ export const OUTCOMES: { id: OutcomeId; end: End | null; by: "github" | "classif
 ];
 
 export const outcomeOf = (f: PRFacts) => OUTCOMES.find((o) => o.fits(f))!;
+
+/** One PR, with what GitHub says about its author. */
+export type OutsidePR = PRFacts & {
+  author: string;
+  /** GitHub says the author has no commits in the repo. */
+  noCommits: boolean;
+  /** The search found no merged PR by the author before the days we read. False when we did not search. */
+  noEarlierMerge: boolean;
+};
+
+/** One person counts once, with their best ending: merged beats rejected, and rejected beats stuck. */
+export const BEST_FIRST: End[] = ["merged", "rejected", "stuck"];
+
+/** Who is new. A merge gives the author commits, so the search decides there. Authors of open PRs get no
+ *  search, so GitHub's answer decides alone. */
+const NEW: Record<End, (p: OutsidePR) => boolean> = {
+  merged: (p) => p.noEarlierMerge,
+  rejected: (p) => p.noCommits || p.noEarlierMerge,
+  stuck: (p) => p.noCommits,
+};
+
+/** PRs per outcome, and newcomers per group. */
+export function tally(prs: OutsidePR[]) {
+  const outcomes = Object.fromEntries(OUTCOMES.map((o) => [o.id, 0])) as Record<OutcomeId, number>;
+  const people = new Map<string, { end: End; isNew: boolean }>();
+  for (const p of prs) {
+    const { id, end } = outcomeOf(p);
+    outcomes[id]++;
+    if (!end) continue;
+    const isNew = NEW[end](p);
+    if (end === "stuck" && !isNew) continue; // an open PR from someone with commits here says nothing about newcomers
+    const was = people.get(p.author);
+    // when one person has several PRs with their best ending, the last one in the list says if they are new
+    if (!was || BEST_FIRST.indexOf(end) <= BEST_FIRST.indexOf(was.end)) people.set(p.author, { end, isNew });
+  }
+  const newcomers: Record<End, number> = { merged: 0, rejected: 0, stuck: 0 };
+  for (const who of people.values()) if (who.isNew) newcomers[who.end]++;
+  return { outcomes, newcomers };
+}
