@@ -8,10 +8,16 @@ import { defineConfig } from "vite";
 // stored results and its Vite cache in that folder, so it shares nothing with the dev server next to it.
 const verifyDir = process.env.VERIFY_STATE_DIR;
 
-export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss(), cloudflare(verifyDir ? { persistState: { path: verifyDir } } : {})],
-  cacheDir: verifyDir ? path.join(verifyDir, "vite") : undefined,
-  resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
-  // dither-kit reads process.env.NODE_ENV for its dev-only warnings
-  define: { "process.env.NODE_ENV": JSON.stringify(mode) },
-}));
+export default defineConfig(({ command, mode }) => {
+  // A build is always for production. A shell that has NODE_ENV=development set would make Vite compile the
+  // page with development JSX calls, next to the production copy of React that `define` below selects. That pair
+  // crashes on load and the live page stays blank, while the API keeps working.
+  if (command === "build") process.env.NODE_ENV = "production";
+  return {
+    plugins: [react(), tailwindcss(), cloudflare(verifyDir ? { persistState: { path: verifyDir } } : {})],
+    cacheDir: verifyDir ? path.join(verifyDir, "vite") : undefined,
+    resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
+    // dither-kit reads process.env.NODE_ENV for its dev-only warnings
+    define: { "process.env.NODE_ENV": JSON.stringify(mode) },
+  };
+});
