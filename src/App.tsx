@@ -150,12 +150,16 @@ export default function App() {
           <AnimatePresence mode="popLayout">
             {idle && (
               <motion.div key="hero" variants={swap} initial={enter} animate={shown} exit="quick" className="relative text-center">
-                {/* The icon sits above the headline without pushing it down, so the centred block and the wash maths stay
-                    as they are. It scales with the screen height and hides when there is no room for it. */}
+                {/* The icon and the link sit above the headline without pushing it down, so the centred block and the wash
+                    maths stay as they are. The icon scales with the screen height and hides when there is no room for it.
+                    The link stays, because it is the only way to the How it works page. */}
                 <div className="absolute bottom-full left-1/2 mb-6 flex -translate-x-1/2 flex-col items-center gap-3">
                   <motion.div variants={rise} custom={0} className="size-[clamp(6rem,15svh,11rem)] sm:size-[clamp(6rem,19svh,12rem)] [@media(max-height:640px)]:hidden sm:[@media(max-height:700px)]:hidden">
                     <PrMark className="block size-full" />
                   </motion.div>
+                  <motion.a variants={rise} custom={1} href="/how" className="text-sm whitespace-nowrap text-emerald-400 underline decoration-emerald-400/30 underline-offset-4 transition-colors hover:text-emerald-300 hover:decoration-emerald-300/70">
+                    How it works?
+                  </motion.a>
                 </div>
                 <motion.h1 variants={rise} custom={2} className="text-4xl font-medium tracking-tight text-balance sm:text-6xl">Will they merge your PR?</motion.h1>
                 <motion.p variants={rise} custom={3} className="mx-auto mt-4 max-w-xl pb-8 text-balance text-muted-foreground">

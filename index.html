@@ -7,6 +7,23 @@
     <meta name="description" content="We read a GitHub repo's history and tell you how likely your PR is to get merged." />
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      /* In the page itself, not in the stylesheet: a new document has to carry this rule before its first paint.
+         Home and How it works are two documents. Where the browser can (Chromium, Safari), it crossfades them in
+         place of a hard cut. Firefox ignores this and keeps the cut. Opacity only, so it is fine with reduced motion. */
+      @view-transition {
+        navigation: auto;
+      }
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation-duration: 200ms;
+        animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      /* the page colour before the stylesheet arrives, so the crossfade never passes through white */
+      html {
+        background: #0a0a0a;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
