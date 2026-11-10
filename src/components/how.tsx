@@ -292,3 +292,135 @@ function Grades() {
     </ul>
   );
 }
+
+export function How() {
+  return (
+    <Frame>
+      <main className="relative mx-auto max-w-5xl px-4 pb-56">
+        <header className="flex h-16 items-center justify-between">
+          <a href="/" className="inline-flex items-center gap-2 text-sm font-medium">
+            <img src="/favicon.svg" alt="" className="size-4" />
+            Merge Odds
+          </a>
+          <a href="/" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Check repos</a>
+        </header>
+
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={enter} className="pt-12 pb-8">
+          <h1 className="text-4xl font-medium tracking-tight sm:text-6xl">How it works</h1>
+          <p className="mt-4 max-w-prose leading-7 text-pretty text-muted-foreground">
+            Each check takes about 4 seconds. Lines marked Example come from one real check: {EX.repo} on 10 November 2026.
+          </p>
+        </motion.div>
+
+        <Rule2 />
+        <Step
+          n={1}
+          title="Fetch the repo"
+          visual={<PixelGrid mode="read" />}
+          lead="We ask GitHub for the recent pull requests and the contributor docs."
+          caption={`Example: one square per PR, ${EX.read.merged} merged, ${EX.read.closed} closed`}
+          facts={[
+            ["PRs", "Up to 200 merged and 200 closed from the last 90 days, cut to the days both lists cover"],
+            ["Docs", "CONTRIBUTING.md (the guide), AI_POLICY.md, the PR template and the workflow files"],
+            ["Example", `${EX.name}: ${READ} PRs from the last ${EX.days} days`],
+          ]}
+        />
+        <Rule2 />
+        <Step
+          n={2}
+          title="Split staff from outsiders"
+          visual={<PixelGrid mode="outside" />}
+          lead="We keep the PRs from outsiders and drop the ones from staff and bots."
+          caption="Example: staff and bot PRs dim, outside PRs stay lit"
+          facts={[
+            ["Staff", "Anyone who pressed merge on PRs here, plus anyone GitHub lists as owner, member or collaborator"],
+            ["Outsiders", "Everyone else, minus bots"],
+            ["Example", `${EX.name}: ${EX.outside.merged + EX.outside.closed} of the ${READ} PRs came from outsiders, ${EX.outside.merged} merged and ${EX.outside.closed} closed`],
+          ]}
+        />
+        <Rule2 />
+        <Step
+          n={3}
+          title="Find the newcomers"
+          visual={<Outcomes />}
+          lead="Newcomers are outsiders who had no merged PR in this repo before the days we read. Each one goes into one of three groups."
+          caption={`Example: ${EX.name}, ${TRIED} newcomers`}
+          facts={[
+            ["How we know", "One GitHub search per author"],
+            ["Groups", "Merged, rejected or stuck. The first row that fits in the table decides"],
+            ["Not counted", "PRs the author closed. They say nothing about maintainers"],
+            ["Once each", `Each newcomer counts once, with their best ending: ${BEST_FIRST[0]} beats ${BEST_FIRST[1]}, ${BEST_FIRST[1]} beats ${BEST_FIRST[2]}`],
+            ["Deadline", `The time 9 in 10 merged outside PRs took to merge. Example: ${EX.stuckAfterDays} days for ${EX.name}`],
+          ]}
+        >
+          <Table compact ordered head={["How the PR ended", "Group", "Source"]} rows={OUTCOME_ROWS} cols="md:grid-cols-[1fr_8rem_6rem]" />
+        </Step>
+        <Rule2 />
+        <Step
+          n={4}
+          title="Ask Jev"
+          lead="Some facts sit in text, like the guide and PR comments. Jev reads that text and answers the same set of questions each time."
+          visual={<Question />}
+          facts={[
+            ["Jev", "The classifier TypeSafe makes. It picks one answer and says how sure it is. It writes no text"],
+            ["Questions", "Three kinds: yes or no, pick one option, give one rating"],
+            ["Yes", "Counts when Jev is 70% sure or more"],
+            ["Example", `${EX.name}: ${QUESTIONS} questions in 5 requests`],
+          ]}
+        >
+          <p className="mb-3 text-xs text-muted-foreground">Example: the 5 requests for {EX.name}</p>
+          <Table head={["Request", "Jev reads", "We ask", "Questions"]} rows={REQUESTS.map((r) => [r.name, r.reads, r.asks, r.count])} cols="md:grid-cols-[9rem_1fr_1fr_5rem]" />
+        </Step>
+        <Rule2 />
+        <Step
+          n={5}
+          title="Do the sum"
+          lead="The odds are the share of newcomers who got merged, adjusted for small samples."
+          visual={<Sum />}
+          facts={[
+            ["Formula", "(merged + 1) ÷ (tried + 2). The +1 and +2 add one merged PR and one unmerged PR, so 3 lucky PRs do not read as 100%"],
+            ["Range", `Fewer newcomers, wider range. We are 90% sure the real odds sit inside it (Wilson interval). Example: ${TRIED} newcomers gives ${EX.range[0]}% to ${EX.range[1]}%`],
+            ["From Jev", `PRs merged another way count as merged. PRs the author closed do not count. Example: 0 and ${EX.withdrawn} of the 60 closed outside PRs Jev read for ${EX.name}`],
+          ]}
+        />
+        <Rule2 />
+        <Step
+          n={6}
+          title="Grade and decide"
+          lead="Two tables, the same for each repo, turn the numbers into six grades and one verdict."
+          visual={<Grades />}
+          caption={`Example: the six grades for ${EX.name}`}
+          facts={[
+            ["Grades", "Six numbers, each graded A to F by the first table. Below the D mark means F"],
+            ["Verdict", "The first row that fits in the second table wins. It uses the odds and Jev's answers. No AI writes it"],
+          ]}
+        >
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
+            <Table compact head={["Metric", "A", "B", "C", "D", ""]} rows={CUT_ROWS} cols="md:grid-cols-[7rem_1fr_1fr_1fr_1fr_4rem] md:gap-x-4" />
+            <Table ordered head={["Verdict", "When"]} rows={VERDICT_ROWS} cols="md:grid-cols-[10rem_1fr]" />
+          </div>
+        </Step>
+        <Rule2 />
+
+        <section className="grid gap-x-16 gap-y-8 py-16 md:grid-cols-2">
+          <Reveal>
+            <h2 className="text-2xl font-medium tracking-tight">Limits</h2>
+            <ul className="mt-6 space-y-3">
+              {LIMITS.map((l) => (
+                <li key={l} className="flex gap-3 text-sm text-pretty text-muted-foreground">
+                  <span className="mt-1.5 size-2 shrink-0 bg-current" />
+                  {l}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+          <Reveal delay={0.1} className="md:justify-self-end md:self-end">
+            <DitherButton color={BRAND} variant="gradient" onClick={() => location.assign("/")} className="h-12 rounded-lg px-6 text-sm font-medium transition-transform active:scale-[0.97]">
+              Check repos
+            </DitherButton>
+          </Reveal>
+        </section>
+      </main>
+    </Frame>
+  );
+}
