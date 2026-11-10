@@ -157,3 +157,85 @@ export function rulesRequest(repo: string, docs: { guide: string; template: stri
   }
   return { state, questions };
 }
+
+// ---------- 2. Which lines of the guide matter ----------
+
+export const CATEGORY_LABEL: Record<PointCategory, string> = {
+  before_coding: "Before you code", code_quality: "Code quality", pr_format: "PR format",
+  legal: "Legal", ai_use: "AI tools", setup: "Setup", community: "Community",
+};
+
+const CATEGORY_CRITERIA: Record<PointCategory, string> = {
+  before_coding: "Opening, finding, or claiming an issue, or talking to maintainers before starting work",
+  code_quality: "Tests, linting, formatting, type checks, or coding style",
+  pr_format: "How the pull request, its title, its description, or its commits must look",
+  legal: "License agreements, sign-offs, or copyright",
+  ai_use: "Use or disclosure of AI coding tools",
+  setup: "Installing dependencies, building, or running the project locally",
+  community: "Conduct, communication channels, or how to ask for help",
+};
+
+/** Lines a person could act on: prose or bullets, not headings, code, tables or bare links. */
+export function candidateLines(markdown: string, max = 120): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  let inCode = false;
+  for (const raw of markdown.split("\n")) {
+    if (/^\s*(```|~~~)/.test(raw)) { inCode = !inCode; continue; }
+    if (inCode || /^\s*(#|\||<|!\[|-{3,}|={3,})/.test(raw)) continue;
+    const line = raw
+      .replace(/^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s*)?/, "")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/[*_`]{1,3}/g, "")
+      .replace(/<[^>]+>/g, "")
+      .trim();
+    // split long paragraphs into sentences so one rule = one question
+    for (const s of line.length > 240 ? line.split(/(?<=[.!?])\s+(?=[A-Z])/) : [line]) {
+      const t = s.trim();
+      if (t.length < 35 || t.length > 320 || seen.has(t.toLowerCase())) continue;
+      // "Those need a go-ahead first" means nothing without the sentence before it
+      if (/^(Those|These|They) (need|are|were|will|must|should|can|may|do|have)\b/.test(t)) continue;
+      seen.add(t.toLowerCase());
+      out.push(t);
+      if (out.length >= max) return out;
+    }
+  }
+  return out;
+}
+
+export function pointsRequest(repo: string, guide: string, lines: string[]) {
+  if (!lines.length) return null;
+  const questions: Record<string, Question> = {};
+  lines.forEach((line, i) => {
+    questions[`must_${i}`] = {
+      type: "noul",
+      instructions: `Does this line from the contributing guide state something a contributor must do, or must not do, for their pull request to be merged? Line: "${line}"`,
+      criteria: {
+        true: "The line is a concrete requirement or a concrete prohibition for contributors",
+        false: "The line is background, a description of the project, a greeting, or optional advice",
+      },
+    };
+    questions[`cat_${i}`] = {
+      type: "choice",
+      instructions: `What is this line from the contributing guide about? Line: "${line}"`,
+      criteria: CATEGORY_CRITERIA,
+    };
+  });
+  return { state: { repository: repo, contributing_guide: guide.slice(0, 60_000) }, questions };
+}
+
+/** For each line: which rule, if any, does it state? Lets every checklist item show the sentence behind it. */
+export function evidenceRequest(repo: string, guide: string, lines: string[]) {
+  if (!lines.length) return null;
+  const criteria: Record<string, string> = { no_rule: "The line states none of these rules" };
+  for (const [id, r] of Object.entries(RULES)) if (r.from === "docs") criteria[id] = r.yes;
+  const questions: Record<string, Question> = {};
+  lines.forEach((line, i) => {
+    questions[`rule_${i}`] = {
+      type: "choice",
+      instructions: `Which contribution rule does this line from the contributing guide state? Line: "${line}"`,
+      criteria,
+    };
+  });
+  return { state: { repository: repo, contributing_guide: guide.slice(0, 60_000) }, questions };
+}
