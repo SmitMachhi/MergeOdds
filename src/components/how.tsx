@@ -1,0 +1,139 @@
+import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransform } from "motion/react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { DitherButton } from "@/components/dither-kit";
+import { Frame } from "@/components/frame";
+import { GradeTile, Rule2 } from "@/components/report";
+import { BRAND } from "@/lib/ui";
+import { cn } from "@/lib/utils";
+import { BEST_FIRST, OUTCOMES } from "../../shared/outcomes";
+import { CUTS, VERDICTS } from "../../shared/rules";
+import type { Grade } from "../../shared/types";
+
+// One real check, used as the running example on this page: vitejs/vite on 10 November 2026.
+// Every number below, the question counts in REQUESTS and the question in <Question> come from that single run.
+// To change the example, run one check of the new repo and replace all of them together.
+// `outside` is what GitHub shows before Jev reads anything. Of those 82 closed PRs, the author closed 11.
+// This is the one page that names Jev: it exists to say how the app works.
+const EX = {
+  repo: "vitejs/vite",
+  name: "Vite",
+  days: 34,
+  read: { merged: 152, closed: 93 },
+  outside: { merged: 30, closed: 82 },
+  withdrawn: 11,
+  newcomers: { merged: 26, rejected: 46, stuck: 21 },
+  stuckAfterDays: 25,
+  odds: 28,
+  range: [21, 36],
+  grades: [["Merge rate", "C"], ["First reply", "B"], ["Time to merge", "B"], ["Left hanging", "C"], ["They say why", "B"], ["Guide", "A"]] as [string, Grade][],
+};
+const TRIED = EX.newcomers.merged + EX.newcomers.rejected + EX.newcomers.stuck;
+const READ = EX.read.merged + EX.read.closed;
+
+// The five Jev requests of that check, with its question counts. Vite has no AI policy file and no workflow
+// that closes PRs, so the rules request held 12 rule questions, not 14.
+const REQUESTS = [
+  { name: "Rules", reads: "The guide and the PR template", asks: "12 yes or no questions about rules, and 2 ratings", count: 14 },
+  { name: "Requirements", reads: "120 lines from the guide", asks: "Must contributors do this? Which of 7 topics is it?", count: 240 },
+  { name: "Quotes", reads: "The same 120 lines", asks: "Which of 12 rules does this line state, if any?", count: 120 },
+  { name: "PR kinds", reads: "90 PR titles", asks: "Which of 6 kinds of change is it?", count: 90 },
+  { name: "Close reasons", reads: "The newest 60 closed outside PRs: title, days open, who closed it, last 3 comments", asks: "Which of 8 reasons closed it?", count: 60 },
+];
+const QUESTIONS = REQUESTS.reduce((s, r) => s + r.count, 0);
+
+// The tables come from shared/rules.ts and shared/outcomes.ts, the same ones the worker decides with, so this page
+// cannot drift from the code.
+const bar = (x: number, unit: string) => (unit === "%" ? `${x}%` : unit === "days" ? `${x}d` : unit === "hours" ? (x < 48 ? `${x}h` : `${x / 24}d`) : `${x}`);
+const CUT_ROWS = Object.values(CUTS).map((c) => [c.label, ...c.cuts.map((x) => bar(x, c.unit)), c.more ? "or more" : "or less"]);
+// In the order the code checks them: the first row that fits wins.
+const VERDICT_ROWS = VERDICTS.map((v) => [v.title, v.when]);
+const GROUP = { merged: "Merged", rejected: "Rejected", stuck: "Stuck" };
+const SOURCE = { github: "GitHub", classifier: "Jev" };
+const OUTCOME_ROWS = OUTCOMES.map((o) => [o.when, o.end ? GROUP[o.end] : "Not counted", SOURCE[o.by]]);
+
+const LIMITS = [
+  "On busy repos, the 400 PRs we read can span 2 days",
+  "Under 10 newcomers, the range is wide",
+  "Jev can answer one borderline case two ways on two runs",
+  "Jev reads the newest 60 closed outside PRs. Older PRs the author closed still count as rejected",
+  "We keep each result for 7 days, so numbers can be 7 days old",
+];
+
+const EASE = [0.16, 1, 0.3, 1] as const;
+const enter = { duration: 0.5, ease: EASE };
+const draw = { duration: 0.6, ease: EASE };
+const VIEW = { once: true, amount: 0.5 } as const;
+
+/** Fades and lifts its children once, the first time they scroll into view. */
+function Reveal({ delay = 0, className, children }: { delay?: number; className?: string; children: ReactNode }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ ...enter, delay }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+/** A step is a numbered title, one plain sentence, a short list of facts, one visual, and an optional full-width
+ *  table under both. The titles and the sentences alone tell the whole story. The Example row holds the numbers
+ *  of the example check, so it reads in the main text colour. */
+function Step({ n, title, lead, facts, visual, caption, children }: { n: number; title: string; lead: string; facts: [string, ReactNode][]; visual: ReactNode; caption?: string; children?: ReactNode }) {
+  return (
+    <section className="py-16">
+      <div className="grid gap-x-16 gap-y-8 md:grid-cols-2 md:items-center">
+        <Reveal>
+          <h2 className="flex items-center gap-3 text-2xl font-medium tracking-tight">
+            <span className="grid size-6 shrink-0 place-items-center rounded-sm border text-xs tracking-normal">{n}</span>
+            {title}
+          </h2>
+          <p className="mt-4 leading-7 text-pretty">{lead}</p>
+          <dl className="mt-4 divide-y divide-border/60">
+            {facts.map(([term, text]) => (
+              <div key={term} className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[7rem_1fr]">
+                <dt className="text-sm text-muted-foreground">{term}</dt>
+                <dd className={cn("text-sm leading-6 text-pretty", term !== "Example" && "text-muted-foreground")}>{text}</dd>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
+        <div>
+          {visual}
+          {caption && <p className="mt-4 text-xs text-muted-foreground">{caption}</p>}
+        </div>
+      </div>
+      {children && <Reveal className="mt-12">{children}</Reveal>}
+    </section>
+  );
+}
+
+/** A plain table that turns into stacked rows on a phone. `head` names the columns; the first column leads.
+ *  A last column of numbers sits on the right. `compact` keeps short values on one line on a phone.
+ *  `ordered` is for the tables where the first row that fits wins: their rows arrive one after another, top to
+ *  bottom, the way the code checks them. The other tables arrive as one block, so the order means something. */
+function Table({ head, rows, cols, compact, ordered }: { head: string[]; rows: (string | number)[][]; cols: string; compact?: boolean; ordered?: boolean }) {
+  const body = useRef<HTMLDivElement>(null);
+  const seen = useInView(body, { once: true, amount: 0.3 });
+  return (
+    <div className="rounded-xl border bg-card px-5">
+      <div className={cn("hidden gap-x-6 border-b border-border/60 py-3 text-xs text-muted-foreground md:grid", cols)}>
+        {head.map((h, i) => <span key={h} className={cn(i === head.length - 1 && typeof rows[0]?.[i] === "number" && "text-right")}>{h}</span>)}
+      </div>
+      <div ref={body} data-ordered={ordered ? "" : undefined} className="divide-y divide-border/60">
+        {rows.map((row, r) => {
+          const line = cn("gap-x-6 gap-y-1 py-3 text-sm md:items-baseline", compact ? "flex flex-wrap gap-x-4 md:grid md:gap-x-6" : "grid", cols);
+          const cells = row.map((cell, i) => (
+            <span key={i} className={cn("text-pretty", i === 0 ? "text-foreground" : "text-muted-foreground", compact && i === 0 && "w-full md:w-auto", i === row.length - 1 && typeof cell === "number" && "md:text-right")}>
+              {i > 0 && head[i] && <span className="mr-2 text-xs md:hidden">{head[i]}</span>}
+              {cell}
+            </span>
+          ));
+          if (!ordered) return <div key={r} className={line}>{cells}</div>;
+          return (
+            <motion.div key={r} data-row initial={{ opacity: 0, y: 6 }} animate={seen ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }} transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1], delay: seen ? r * 0.04 : 0 }} className={line}>
+              {cells}
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
