@@ -239,3 +239,29 @@ export function evidenceRequest(repo: string, guide: string, lines: string[]) {
   });
   return { state: { repository: repo, contributing_guide: guide.slice(0, 60_000) }, questions };
 }
+
+// ---------- 3. What kind of PR each one is ----------
+
+export const PR_TYPES = {
+  bug_fix: { label: "Bug fixes", when: "Fixes a bug, crash, regression, or wrong behavior" },
+  new_feature: { label: "New features", when: "Adds a new capability, option, integration, or API" },
+  documentation: { label: "Docs", when: "Changes documentation, comments, examples, or translations only" },
+  tests: { label: "Tests", when: "Adds or fixes tests only" },
+  refactor: { label: "Refactors", when: "Restructures, cleans up, or speeds up code without changing what it does" },
+  build_or_deps: { label: "Build and deps", when: "Changes dependencies, CI, build scripts, or tooling" },
+} as const;
+export type PRType = keyof typeof PR_TYPES;
+
+export function typesRequest(repo: string, description: string, prs: { number: number; title: string }[]) {
+  if (!prs.length) return null;
+  const criteria = Object.fromEntries(Object.entries(PR_TYPES).map(([k, v]) => [k, v.when]));
+  const questions: Record<string, Question> = {};
+  for (const pr of prs) {
+    questions[`type_${pr.number}`] = {
+      type: "choice",
+      instructions: `What kind of change does a pull request with this title make? Title: "${pr.title.slice(0, 200)}"`,
+      criteria,
+    };
+  }
+  return { state: { repository: repo, about: description }, questions };
+}
