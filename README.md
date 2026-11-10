@@ -1,5 +1,7 @@
 # Merge Odds
 
+**Try it: [mergeodds.lol](https://mergeodds.lol)**
+
 Paste a GitHub repo. See the odds that a first-time contributor's PR gets merged, why outside PRs get closed, and
 what the maintainers ask for.
 
@@ -56,6 +58,9 @@ npm run deploy
 
 `GITHUB_TOKEN` needs no scopes: it only reads public repos. The first deploy creates the KV namespace for
 stored results.
+
+`wrangler.jsonc` routes the worker to `mergeodds.lol`. To deploy your own copy, put your own domain in `routes`,
+or delete that line and use the workers.dev address wrangler prints.
 
 ## Limits on new checks
 
