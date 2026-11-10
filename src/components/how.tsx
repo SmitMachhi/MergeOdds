@@ -205,3 +205,38 @@ function Outcomes() {
     </div>
   );
 }
+
+// ---- step 4: one real question and its answer ----
+
+function Question() {
+  const rows: [string, ReactNode][] = [
+    ["Jev reads", <>PR #23901. Open less than 1 day. One maintainer closed it. Last comment: "This will be fixed by #23603"</>],
+    ["We ask", "Why was this pull request closed without being merged?"],
+    ["Options", "Went stale, merged another way, someone else fixed it, maintainers said no, broke the rules, low effort, author withdrew it, no reason given"],
+  ];
+  return (
+    <div className="rounded-xl border bg-card px-5">
+      <p className="border-b border-border/60 py-3 text-xs text-muted-foreground">Example: one real close-reason question</p>
+      <dl className="divide-y divide-border/60">
+        {rows.map(([term, text]) => (
+          <div key={term} className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[5rem_1fr]">
+            <dt className="text-xs text-muted-foreground sm:pt-1">{term}</dt>
+            <dd className="text-sm leading-6 text-pretty">{text}</dd>
+          </div>
+        ))}
+        <div className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[5rem_1fr]">
+          <dt className="text-xs text-muted-foreground sm:pt-1">Jev says</dt>
+          <dd className="text-sm">
+            <span className="flex items-baseline justify-between gap-4">
+              <span className="text-emerald-400">Someone else fixed it</span>
+              <span>99% sure</span>
+            </span>
+            <span className="mt-2 block h-2 text-white/20 dither-25">
+              <motion.span className="block h-full origin-left bg-emerald-400" initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={VIEW} transition={{ ...draw, delay: 0.2 }} />
+            </span>
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
