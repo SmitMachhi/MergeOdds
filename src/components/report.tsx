@@ -251,3 +251,87 @@ function Reasons({ a }: { a: Analysis }) {
     </Card>
   );
 }
+
+const RULE_ICON = { blocker: Ban, warning: TriangleAlert, todo: Check };
+const RULE_TONE = { blocker: "text-red-400", warning: "text-orange-400", todo: "text-muted-foreground" };
+
+function RuleItem({ r }: { r: Rule }) {
+  const Icon = RULE_ICON[r.kind];
+  return (
+    <li>
+      <p className="flex gap-2 text-sm font-medium">
+        <Icon strokeWidth={1.5} className={cn("mt-0.5 size-4 shrink-0", RULE_TONE[r.kind])} />
+        {r.label}
+      </p>
+      {r.quote && <p className="mt-2 ml-6 max-w-prose border-l-2 border-border pl-3 text-sm leading-6 text-pretty text-muted-foreground">{r.quote}</p>}
+    </li>
+  );
+}
+
+/** One line of the guide list: a short label on the left, the content on the right. Stacks on a phone. */
+function GuideRow({ label, step, children }: { label: string; step?: number; children: ReactNode }) {
+  return (
+    <div className="grid gap-x-6 gap-y-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[10rem_1fr]">
+      <h3 className="flex items-center gap-2 self-start text-xs text-muted-foreground sm:pt-0.5">
+        {step !== undefined && <span className="grid size-5 place-items-center rounded-sm border text-xs text-foreground">{step}</span>}
+        {label}
+      </h3>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+/** The contributing guide as one list you can scan top to bottom: the rules in the order you meet them,
+ *  then the other requirements, grouped by topic. Steps with no rule are left out. */
+function Guide({ a }: { a: Analysis }) {
+  const title = "Their contributing guide, step by step";
+  const steps = PHASES.map(([phase, label]) => ({ label, rules: a.rules.filter((r) => r.phase === phase) })).filter((s) => s.rules.length);
+  const topics = Object.entries(CATEGORY)
+    .map(([key, label]) => ({ label, lines: a.points.filter((p) => p.category === key) }))
+    .filter((t) => t.lines.length);
+  const link = a.repo.guideUrl && (
+    <a href={a.repo.guideUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
+      {a.repo.guidePath} <ArrowUpRight strokeWidth={1.5} className="size-4" />
+    </a>
+  );
+  if (!a.rules.length && !a.points.length)
+    return (
+      <Card title={title} hint={link}>
+        <p className="py-4 text-sm text-pretty text-muted-foreground">
+          {a.failed
+            ? "We could not read their guide this time. Check again in a minute"
+            : "This repo has no contributing guide or PR template. Read a few merged PRs to see what gets through"}
+        </p>
+      </Card>
+    );
+  return (
+    <Card title={title} hint={link}>
+      {steps.length > 0 && (
+        <div className="divide-y divide-border/60">
+          {steps.map((s, i) => (
+            <GuideRow key={s.label} label={s.label} step={i + 1}>
+              <ul className="space-y-4">{s.rules.map((r) => <RuleItem key={r.id} r={r} />)}</ul>
+            </GuideRow>
+          ))}
+        </div>
+      )}
+      {topics.length > 0 && (
+        <div className={cn(steps.length > 0 && "mt-6")}>
+          {steps.length > 0 && <Rule2 />}
+          <p className={cn("mb-4 text-xs text-muted-foreground", steps.length > 0 && "mt-4")}>Also in their guide</p>
+          <div className="divide-y divide-border/60">
+            {topics.map((t) => (
+              <GuideRow key={t.label} label={t.label}>
+                <ul className="space-y-2">
+                  {t.lines.map((p) => (
+                    <li key={p.text} className="max-w-prose text-sm leading-6 text-pretty">{p.text}</li>
+                  ))}
+                </ul>
+              </GuideRow>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
