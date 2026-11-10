@@ -7,5 +7,7 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
+  // Checked repos, kept for 7 days. No id here: wrangler creates the namespace on the first deploy.
+  "kv_namespaces": [{ "binding": "RESULTS" }],
   "observability": { "enabled": true }
 }
