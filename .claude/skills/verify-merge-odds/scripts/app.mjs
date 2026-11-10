@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Starts, checks and stops a private copy of Merge Odds for verification, and calls its API.
-// Run every command from the web/ folder:
+// Run every command from the repo's root folder:
 //   node .claude/skills/verify-merge-odds/scripts/app.mjs launch [--port 5299]
 //   node .claude/skills/verify-merge-odds/scripts/app.mjs doctor
 //   node .claude/skills/verify-merge-odds/scripts/app.mjs check <owner/name> [--fresh] [--label <name>] [--expect <status>]
@@ -19,7 +19,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const say = (o) => console.log(JSON.stringify(o, null, 2));
 const die = (message) => { console.error(message); process.exit(1); };
 
-if (!existsSync(path.join(ROOT, "wrangler.jsonc")) || !existsSync(path.join(ROOT, "worker", "index.ts"))) die("Run this from the web/ folder of the repo.");
+if (!existsSync(path.join(ROOT, "wrangler.jsonc")) || !existsSync(path.join(ROOT, "worker", "index.ts"))) die("Run this from the root folder of the repo.");
 
 const readRun = () => (existsSync(RUN) ? JSON.parse(readFileSync(RUN, "utf8")) : null);
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
@@ -47,7 +47,7 @@ async function launch() {
   if (old && alive(old.pid)) return say({ already: "running", ...old });
   if (old) rmSync(RUN);
   const k = keys();
-  if (!k.GITHUB_TOKEN || !k.TYPESAFE_API_KEY) die(`web/.dev.vars is missing ${Object.keys(k).filter((x) => !k[x]).join(" and ")}. Copy .dev.vars.example to .dev.vars and fill both in.`);
+  if (!k.GITHUB_TOKEN || !k.TYPESAFE_API_KEY) die(`.dev.vars is missing ${Object.keys(k).filter((x) => !k[x]).join(" and ")}. Copy .dev.vars.example to .dev.vars and fill both in.`);
 
   const port = Number(flag("port") ?? 5299);
   const id = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
