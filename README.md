@@ -1,17 +1,22 @@
 # Merge Odds
 
-Paste a GitHub repo. See the odds that your PR gets merged.
+Paste a GitHub repo. See the odds that a first-time contributor's PR gets merged, why outside PRs get closed, and
+what the maintainers ask for.
 
-This repo is being built in the open, one small pull request at a time. Right now the API reads a repo's recent
-pull requests from GitHub, asks the classifier about its rules and closed PRs, and answers with the odds, six
-grades and one verdict. The home page takes a repo, runs the check and shows the report. The `/how` page
-explains each step with the numbers of one real check.
-
-- **Worker:** [Hono](https://hono.dev) on Cloudflare Workers (`worker/`). One endpoint: `GET /api/analyze?repo=owner/name`.
-- **GitHub data:** every read is in `worker/github.ts`: the repo, its contributor docs, and up to 400 recent PRs.
+- **Worker:** Hono on Cloudflare Workers (`worker/`). One endpoint: `GET /api/analyze?repo=owner/name`.
+- **UI:** Vite, React, Tailwind, shadcn, motion, and [dither-kit](https://tripwire.sh/dither-kit) charts (`src/`).
 - **Judgment:** [Jev](https://typesafe.ai) answers typed questions about the repo's rules and closed PRs. Every
-  question is in `worker/jev.ts`.
-- **UI:** Vite, React, Tailwind, shadcn, motion, and [dither-kit](https://tripwire.sh/dither-kit) (`src/`).
+  question is in `worker/jev.ts`. The odds and the verdict are plain code in `worker/analyze.ts`.
+- **Shared rules (`shared/`):** three files hold the decisions that more than one place needs.
+  - `shared/check.ts` is the state machine of one check on the page: `idle`, `pending`, `loading`, `done`, `error`,
+    and every move between them. The page puts the state name on `<main data-state>`.
+  - `shared/outcomes.ts` is the table that sorts each outside PR by how it ended (`merged`, `bot_merged`,
+    `merged_elsewhere`, `withdrawn`, `rejected`, `stuck`), and the count that gives each newcomer one group.
+    The API returns the split as `outcomes`.
+  - `shared/rules.ts` holds the grade cut-offs and the verdict table.
+  - The worker decides with these tables and the How it works page prints them, so the two cannot disagree.
+  - `tests/check.test.mjs`, `tests/outcomes.test.mjs` and `tests/rules.test.mjs` cover them.
+    `tests/fixtures/outcomes.json` holds real PRs from 7 checks, with logins replaced by numbers.
 
 ## Run it
 
@@ -21,7 +26,15 @@ npm install
 npm run dev
 ```
 
-`GITHUB_TOKEN` needs no scopes: it only reads public repos.
+## Check the wording
+
+```bash
+npm test
+```
+
+The test reads the text the page shows and fails on em dashes, exclamation marks, "-ly" adverbs, filler words
+and any mention of the engine. It also checks that a count of one reads as singular. Quotes from a repo's guide
+are shown word for word, so the test leaves them alone.
 
 ## Deploy
 
@@ -33,12 +46,6 @@ npm run deploy
 
 `GITHUB_TOKEN` needs no scopes: it only reads public repos. The first deploy creates the KV namespace for
 stored results.
-
-## Test it
-
-```bash
-npm test
-```
 
 ## The math
 
@@ -65,7 +72,3 @@ each rule, what kind of change each PR is, and why each closed PR was closed. Ev
 A checked repo is stored in Workers KV for 7 days (the `RESULTS` binding), and the report says how old it is.
 Add `&fresh=1` to run a new check and replace the stored one. To throw out every stored result after a change to
 the math, bump `VERSION` in `worker/index.ts`.
-
-## Licence
-
-MIT: see `LICENSE`. The typeface is Paper Mono, under the SIL Open Font License: see `src/assets/fonts/OFL.txt`.
