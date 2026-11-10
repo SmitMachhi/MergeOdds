@@ -33,7 +33,7 @@ export function Frame({ children }: { children: ReactNode }) {
       {/* The wash is 18rem on a long page. On the home page, which is one screen tall, it shrinks to half the
           page minus 13rem so it stays under the centred text. Percent, not svh: a full-page screenshot changes svh. */}
       <motion.div {...fade(settled, 0.2)} data-wash className="pointer-events-none absolute inset-x-0 bottom-0 h-[clamp(0px,calc(50%_-_13rem),18rem)]">
-        <DitherGradient from={BRAND} direction="up" opacity={0.25} />
+        <DitherGradient from={BRAND} opacity={0.25} />
       </motion.div>
       <motion.nav {...fade(settled, 0.35)} aria-label="Made by Smit" className="absolute bottom-2 left-2 z-10 flex gap-2">
         {SOCIALS.map((s) => (

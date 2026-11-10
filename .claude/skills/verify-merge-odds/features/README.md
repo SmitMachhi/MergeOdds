@@ -5,7 +5,7 @@ you drive the app, then use the matching feature file as the recipe.
 
 ## Baseline preconditions
 
-- Your shell is in the `web/` folder.
+- Your shell is in the repo's root folder.
 - `A="node .claude/skills/verify-merge-odds/scripts/app.mjs"` and `UI=".claude/skills/verify-merge-odds/scripts/ui.py"` are set.
 - `$A launch` printed `ready: true`. The app is at `http://localhost:5299` unless you passed `--port`.
 - `$A doctor` exits 0.

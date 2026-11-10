@@ -1,50 +1,14 @@
-export { Area, type AreaProps, Line, type SeriesProps } from "./area"
-export { AreaChart, type AreaChartProps, LineChart } from "./area-chart"
-export {
-  type AvatarMirror,
-  DitherAvatar,
-  type DitherAvatarProps,
-} from "./avatar"
-export { Bar, type BarProps } from "./bar"
+// dither-kit: dithered charts, button and wash, copied in from Boring-Software-Inc/dither-kit (MIT) and trimmed to
+// the parts this app uses. The app imports from here, so the files next to this one stay private.
 export { BarChart } from "./bar-chart"
-export { BlockLegend } from "./block-legend"
-export {
-  type ButtonVariant,
-  DitherButton,
-  type DitherButtonProps,
-} from "./button"
-export type { CartesianChartProps } from "./cartesian-root"
-export type {
-  AreaVariant,
-  ChartConfig,
-  ChartType,
-  Margins,
-  SeriesKind,
-  StrokeVariant,
-} from "./chart-context"
-export type {
-  BloomBlend,
-  BloomConfig,
-  BloomInput,
-  BloomLevel,
-} from "./dither-paint"
-export { ActiveDot, Dot, type DotVariant } from "./dot"
-export {
-  DitherGradient,
-  type DitherGradientProps,
-  type GradientDirection,
-} from "./gradient"
-export { Grid } from "./grid"
+export { DitherButton } from "./button"
+export type { ChartConfig } from "./common-context"
+export { DitherGradient } from "./gradient"
 export { Legend } from "./legend"
 export type { DitherColor } from "./palette"
-export type { PixelBloom, PixelColor } from "./pixel"
-export { Pie, type PieProps } from "./pie"
-export { PieChart, type PieChartProps } from "./pie-chart"
-export { Radar, type RadarProps } from "./radar"
-export { RadarChart, type RadarChartProps } from "./radar-chart"
-export { ReferenceLine } from "./reference-line"
-export type { StackType } from "./scales"
-export { Sparkline, type SparklineProps } from "./sparkline"
-export { Tooltip, type TooltipVariant } from "./tooltip"
+export { PieChart } from "./pie-chart"
+export { Tooltip } from "./tooltip"
 export { XAxis } from "./x-axis"
 export { YAxis } from "./y-axis"
+export { BAYER, OFF_TIER, prefersReducedMotion } from "./dither-paint"
+export { PALETTE, rgb, type Rgb } from "./palette"

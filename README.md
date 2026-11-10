@@ -59,8 +59,8 @@ Six numbers get grades (A, B, C, D, F). `shared/rules.ts` holds the cut-offs and
 | --- | --- |
 | `worker/` | The API, `GET /api/analyze?repo=owner/name`: GitHub reads, the classifier's questions, the check, storage and limits |
 | `shared/` | The decision tables: PR outcomes, grades, the verdict, and the page's check states |
-| `src/` | The page: Vite, React, Tailwind, shadcn, motion and dither-kit |
-| `tests/` | 28 tests for the math, the limits, the page states and the wording |
+| `src/` | The page: Vite, React, Tailwind, motion and a trimmed copy of dither-kit |
+| `tests/` | 29 tests for the math, the limits, the page states, the wording and file size |
 | `.claude/skills/verify-merge-odds/` | Scripts that start the app, drive it like visitors do, and save proof |
 
 The worker decides with the tables in `shared/`, and the How it works page prints those same tables. The page and the code cannot disagree.
@@ -113,7 +113,7 @@ Two switches for stored results:
 
 The app's code is under the MIT licence: see `LICENSE`.
 
-- **dither-kit** (`src/components/dither-kit/`): charts, the button and the gradient, copied in from [Boring-Software-Inc/dither-kit](https://github.com/Boring-Software-Inc/dither-kit) with the shadcn CLI. MIT.
+- **dither-kit** (`src/components/dither-kit/`): charts, the button and the gradient, copied in from [Boring-Software-Inc/dither-kit](https://github.com/Boring-Software-Inc/dither-kit) with the shadcn CLI, then trimmed to the parts this app uses. MIT.
 - **Paper Mono** (`src/assets/fonts/`): the typeface, by Paper. SIL Open Font License: see `OFL.txt` next to it.
 - **Octicons:** the pull request icon, by GitHub. MIT.
 - **Jev:** the classifier, by [TypeSafe](https://typesafe.ai). The worker calls it over the network.

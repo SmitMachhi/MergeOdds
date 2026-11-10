@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Proves that a change to the worker changes no result. Run every command from the web/ folder:
+// Proves that a change to the worker changes no result. Run every command from the repo's root folder:
 //   node .claude/skills/verify-merge-odds/scripts/tape.mjs record <owner/name> [<owner/name> ...]
 //   node .claude/skills/verify-merge-odds/scripts/tape.mjs replay [<owner/name> ...] [--ignore <field>] [--out <folder>] [--accept]
 //
-// `record` runs one real check through worker/analyze.ts and saves every answer GitHub and the classifier gave,
+// `record` runs one real check through the worker (worker/analyze.ts) and saves every answer GitHub and the classifier gave,
 // with the result, in .verify/tapes/. It stops the clock for the run, so the same code asks the same questions later.
 // `replay` runs the worker code as it is now against those saved answers, with no network and no keys, and says
 // SAME or DIFFERENT for each tape. Record before a change, replay after it.
@@ -26,7 +26,7 @@ for (let i = 0; i < rest.length; i++) {
   else repos.push(rest[i]);
 }
 const die = (message) => { console.error(message); process.exit(1); };
-if (!existsSync(path.join(ROOT, "worker", "analyze.ts"))) die("Run this from the web/ folder of the repo.");
+if (!existsSync(path.join(ROOT, "worker", "analyze.ts"))) die("Run this from the root folder of the repo.");
 if (cmd !== "record" && cmd !== "replay") die("Use: tape.mjs record <owner/name> ...   or   tape.mjs replay [<owner/name> ...]");
 mkdirSync(DIR, { recursive: true });
 
@@ -54,7 +54,7 @@ function secrets() {
   const file = path.join(ROOT, ".dev.vars");
   const text = existsSync(file) ? readFileSync(file, "utf8") : "";
   const env = Object.fromEntries(text.split(/\r?\n/).filter((l) => /^[A-Z_]+=/.test(l)).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim().replace(/^["']|["']$/g, "")]));
-  if (!env.GITHUB_TOKEN || !env.TYPESAFE_API_KEY) die("web/.dev.vars needs GITHUB_TOKEN and TYPESAFE_API_KEY to record.");
+  if (!env.GITHUB_TOKEN || !env.TYPESAFE_API_KEY) die(".dev.vars needs GITHUB_TOKEN and TYPESAFE_API_KEY to record.");
   return env;
 }
 

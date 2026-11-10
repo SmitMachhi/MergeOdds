@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
-import { BAYER, OFF_TIER, prefersReducedMotion } from "@/components/dither-kit/dither-paint";
-import { rgb, type Rgb } from "@/components/dither-kit/palette";
+import { BAYER, OFF_TIER, prefersReducedMotion, rgb, type Rgb } from "@/components/dither-kit";
 
 // The pull request icon from GitHub Octicons (git-pull-request-16). MIT License, Copyright (c) GitHub Inc.
 // Same path as public/favicon.svg.

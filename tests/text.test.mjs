@@ -11,9 +11,9 @@ import { checkedAgo, halfOf, noPeriod, plural } from "../shared/text.ts";
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 // Every string and every piece of JSX text in these files reaches the page.
-const PAGE_FILES = ["index.html", "src/App.tsx", "src/components/report.tsx", "src/components/how.tsx", "src/components/frame.tsx", "src/lib/ui.ts", "shared/types.ts", "shared/text.ts", "shared/check.ts", "shared/rules.ts", "shared/outcomes.ts"];
+const PAGE_FILES = ["index.html", "src/App.tsx", "src/components/report.tsx", "src/components/report-parts.tsx", "src/components/card.tsx", "src/components/loading.tsx", "src/components/how.tsx", "src/components/how-layout.tsx", "src/components/how-visuals.tsx", "src/components/frame.tsx", "src/lib/ui.ts", "shared/types.ts", "shared/text.ts", "shared/check.ts", "shared/rules.ts", "shared/outcomes.ts"];
 // In the worker only some lines reach the page: labels, scorecard sums, verdict titles and reasons.
-const WORKER_FILES = { "worker/analyze.ts": /\b(label|value|math|title)\s*[:=]|reasons\.push\(/, "worker/jev.ts": /\blabel:/, "worker/index.ts": /error:/, "worker/budget.ts": /^export const [A-Z_]+ = "/ };
+const WORKER_FILES = { "worker/summary.ts": /\b(label|value|math|title)\s*[:=]|reasons\.push\(/, "worker/jev.ts": /\blabel:/, "worker/jev-rules.ts": /\blabel:/, "worker/index.ts": /error:/, "worker/budget.ts": /^export const [A-Z_]+ = "/ };
 
 // Words ending in "ly" that are not adverbs.
 // "likely" is on the list for "how likely": there it is an adjective. Do not write "will likely".
@@ -36,11 +36,11 @@ function visibleText(source) {
 }
 
 // The "How it works" page is the one place allowed to name the engine: it exists to explain it.
-const MAY_NAME_ENGINE = new Set(["src/components/how.tsx"]);
+const MAY_NAME_ENGINE = new Set(["src/components/how.tsx", "src/components/how-visuals.tsx"]);
 // That page is also written without "a" and "an". A grade letter ("A to F") is not an article, and a quote from
 // a GitHub thread keeps its own words.
 // shared/rules.ts and shared/outcomes.ts hold the table rows that page prints.
-const NO_ARTICLES = new Set(["src/components/how.tsx", "shared/rules.ts", "shared/outcomes.ts"]);
+const NO_ARTICLES = new Set(["src/components/how.tsx", "src/components/how-layout.tsx", "src/components/how-visuals.tsx", "shared/rules.ts", "shared/outcomes.ts"]);
 const article = (text) => /(^|[.:?] )An? [a-z]|\b(a|an) /.test(text.replace(/"[^"]*"/g, ""));
 
 function problems(text, file) {
@@ -63,8 +63,8 @@ test("page text follows the writing rules", () => {
   }
   for (const [file, visible] of Object.entries(WORKER_FILES)) {
     const lines = read(file).split("\n").filter((l) => visible.test(l));
-    // worker/jev.ts puts a label next to the question it asks the engine. Only the label reaches the page.
-    const texts = file === "worker/jev.ts"
+    // The jev files put a label next to each question they ask the engine. Only the label reaches the page.
+    const texts = file.startsWith("worker/jev")
       ? lines.flatMap((l) => [...l.matchAll(/\blabel:\s*"([^"]*)"/g)].map((m) => m[1]))
       : visibleText(lines.join("\n"));
     for (const text of texts) for (const p of problems(text, file)) bad.push(`${file}: ${p} in "${text}"`);

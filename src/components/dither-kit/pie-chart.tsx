@@ -1,33 +1,53 @@
 import type { ReactNode } from "react"
-import type { ChartConfig, Margins } from "./chart-context"
-import type { BloomInput } from "./dither-paint"
+import { type ChartConfig, CommonChartContext } from "./common-context"
 import { PieCanvas } from "./pie-canvas"
-import { PolarRoot } from "./polar-root"
+import { PieContext, sliceAtAngle, usePieState } from "./pie-context"
+import { useChartDimensions } from "./use-chart-dimensions"
 
-// `object` rather than `Record<string, unknown>`: interfaces don't get an
-// implicit index signature, so interface-typed rows failed to satisfy the
-// generic. Internal layers still index rows through their own Row type.
-type Row = object
+const MARGINS = { top: 22, right: 14, bottom: 14, left: 14 }
 
-export type PieChartProps<TData extends Row> = {
-  data: TData[]
-  config: ChartConfig
-  children: ReactNode
-  dataKey: string // value field
-  nameKey: string // slice-name field (looked up in config for colour)
-  innerRadius?: number // 0–1 ratio for a donut
-  margins?: Partial<Margins>
-  className?: string
-  animate?: boolean
-  animationDuration?: number
-  replayToken?: number
-  bloom?: BloomInput
-  bloomOnHover?: boolean
-  defaultSelectedDataKey?: string | null
-  onSelectionChange?: (key: string | null) => void
-}
+/**
+ * Dithered donut chart: one slice per row of `data`, sized by `dataKey` and named by `nameKey` (looked up in
+ * `config` for its colour). `innerRadius` is the hole's share of the radius. Put `<Tooltip>` inside.
+ */
+export function PieChart({ data, config, dataKey, nameKey, innerRadius, children }: {
+  data: object[]; config: ChartConfig; dataKey: string; nameKey: string; innerRadius: number; children: ReactNode
+}) {
+  const { ref, size } = useChartDimensions<HTMLDivElement>()
+  // Safe: the chart only reads row[dataKey] and row[nameKey].
+  const ctx = usePieState(data as Record<string, unknown>[], config, dataKey, nameKey, innerRadius, size, MARGINS)
 
-/** Composable dither **pie / donut** chart. Compose `<Pie>`, `<Legend>`, … inside. */
-export function PieChart<TData extends Row>(props: PieChartProps<TData>) {
-  return <PolarRoot chartType="pie" Canvas={PieCanvas} {...props} />
+  const onMove = (clientX: number, clientY: number) => {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const dx = clientX - rect.left - MARGINS.left - ctx.center.x
+    const dy = clientY - rect.top - MARGINS.top - ctx.center.y
+    const r = Math.hypot(dx, dy)
+    const i = r <= ctx.outerRadius && r >= ctx.innerRadius ? sliceAtAngle(ctx.pie, Math.atan2(dy, dx)) : -1
+    ctx.setHoverIndex(i >= 0 ? i : null)
+    ctx.setCursor(clientX - rect.left, clientY - rect.top)
+  }
+
+  return (
+    <PieContext value={ctx}>
+      <CommonChartContext value={ctx.common}>
+        <div
+          ref={ref}
+          className="relative h-full w-full"
+          onPointerEnter={() => ctx.setMouseInChart(true)}
+          onPointerMove={(e) => onMove(e.clientX, e.clientY)}
+          onPointerLeave={() => {
+            ctx.setMouseInChart(false)
+            ctx.setHoverIndex(null)
+          }}
+        >
+          <PieCanvas />
+          {/* gives the chart its accessible name, as the bar chart's axes layer does */}
+          {ctx.ready && <svg width={size.width} height={size.height} className="absolute inset-0" role="img" aria-label="Chart" />}
+          {children}
+        </div>
+      </CommonChartContext>
+    </PieContext>
+  )
 }

@@ -1,6 +1,6 @@
 ---
 name: verify-merge-odds
-description: Launch a private copy of the Merge Odds web app (the Vite + Cloudflare Worker app in web/), drive it like a visitor through its API and its pages, and save proof. Use after any change to worker/, src/ or shared/ to prove a feature works in the real app, when asked to verify, demo or screenshot the app, or to check that a repo check, the stored results, the How it works page or the error messages still behave.
+description: Launch a private copy of the Merge Odds web app (the Vite + Cloudflare Worker app at the repo's root), drive it like a visitor through its API and its pages, and save proof. Use after any change to worker/, src/ or shared/ to prove a feature works in the real app, when asked to verify, demo or screenshot the app, or to check that a repo check, the stored results, the How it works page or the error messages still behave.
 ---
 
 # Verify Merge Odds
@@ -8,7 +8,7 @@ description: Launch a private copy of the Merge Odds web app (the Vite + Cloudfl
 Merge Odds is one Cloudflare Worker that serves a React page and one API route, `GET /api/analyze?repo=owner/name`.
 A visitor pastes a GitHub repo and gets the odds that a newcomer's PR is merged.
 
-This skill starts its own copy of the app, drives it, and keeps the proof. Run every command from the `web/`
+This skill starts its own copy of the app, drives it, and keeps the proof. Run every command from the repo's root
 folder. Read [features/README.md](features/README.md) before you drive anything: it lists the features and the
 recipe for each.
 
@@ -29,7 +29,7 @@ $A launch            # port 5299, or: $A launch --port 5301
 - Ready means two things answered, and the command waits for both (up to 90 seconds, about 10 in practice): the
   home page has the title `Merge Odds`, and the worker answers `/api/analyze?repo=` with its own 400 message.
 - It prints `ready: true` with the `url`, `pid` and `evidence` folder, and writes them to `.verify/run.json`.
-- Needs `web/.dev.vars` with `GITHUB_TOKEN` and `TYPESAFE_API_KEY`. Launch refuses to start without both and
+- Needs `.dev.vars` with `GITHUB_TOKEN` and `TYPESAFE_API_KEY`. Launch refuses to start without both and
   says which is missing. Never print their values.
 - There are no migrations and no seed data. The only state is the stored results, and they start empty.
 - A second `launch` while one is running reports the running one. For two copies side by side, use two checkouts.
@@ -158,7 +158,9 @@ $A stop
 | File | What it is | How to run it |
 | --- | --- | --- |
 | `scripts/app.mjs` | Launch, doctor, API check, stop | `node .claude/skills/verify-merge-odds/scripts/app.mjs <launch|doctor|check|stop>` |
-| `scripts/ui.py` | The four browser journeys | `JOURNEY=<check|how|error|motion> browser-use < .claude/skills/verify-merge-odds/scripts/ui.py` |
+| `scripts/ui.py` | Runs one browser journey: shared helpers and settings | `JOURNEY=<check|how|error|motion> browser-use < .claude/skills/verify-merge-odds/scripts/ui.py` |
+| `scripts/journeys.py` | The check, how and error journeys. `ui.py` loads it | Through `ui.py` |
+| `scripts/motion_live.py`, `scripts/motion_pages.py` | The motion journey's five parts. `ui.py` loads both | Through `ui.py` with `JOURNEY=motion` |
 | `scripts/tape.mjs` | Record real checks, then replay them against changed worker code | `node .claude/skills/verify-merge-odds/scripts/tape.mjs <record|replay> [owner/name ...]` |
 
 `tape.mjs` answers one question: did a change to `worker/` or `shared/` change any result? It needs no server.
@@ -177,5 +179,5 @@ same on the same answers. It is not proof that a feature works on the page: that
 Tapes go stale when the worker asks GitHub or the classifier something new: replay then reports new questions,
 so record again from the commit before your change.
 
-Keep `ui.py` ASCII. On Windows `browser-use` garbles other characters in a script read from stdin, including
+Keep `ui.py` and the journey files ASCII. On Windows `browser-use` garbles other characters in a script read from stdin, including
 backslash-u escapes, so build them with `chr()`.
