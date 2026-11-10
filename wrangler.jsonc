@@ -3,6 +3,11 @@
   "name": "merge-odds",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-01",
+  // The site's own address. The domain is in the same Cloudflare account, and wrangler adds its DNS record.
+  // To deploy your own copy, put your domain here or delete this line: the workers.dev address still works.
+  "routes": [{ "pattern": "mergeodds.lol", "custom_domain": true }],
+  // Keep the workers.dev address too. Without this line, wrangler turns it off once a route is set.
+  "workers_dev": true,
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
