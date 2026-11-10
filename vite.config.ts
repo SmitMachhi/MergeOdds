@@ -4,8 +4,13 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+// The verify-merge-odds skill starts a second copy of the app with VERIFY_STATE_DIR set. That copy keeps its
+// stored results and its Vite cache in that folder, so it shares nothing with the dev server next to it.
+const verifyDir = process.env.VERIFY_STATE_DIR;
+
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss(), cloudflare()],
+  plugins: [react(), tailwindcss(), cloudflare(verifyDir ? { persistState: { path: verifyDir } } : {})],
+  cacheDir: verifyDir ? path.join(verifyDir, "vite") : undefined,
   resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
   // dither-kit reads process.env.NODE_ENV for its dev-only warnings
   define: { "process.env.NODE_ENV": JSON.stringify(mode) },
