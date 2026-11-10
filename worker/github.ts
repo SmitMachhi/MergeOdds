@@ -83,3 +83,40 @@ export async function fetchMeta(token: string, o: string, n: string): Promise<Me
   if (!r.repository) throw new GhError("Repo not found", 404);
   return r.repository;
 }
+
+const DAY = 86400_000;
+const ENOUGH_DAYS = 30;
+const BOTS = new Set(["dependabot", "renovate", "github-actions", "copilot", "dosu", "dosubot", "codecov", "vercel",
+  "netlify", "snyk-bot", "mergify", "allcontributors", "pre-commit-ci", "imgbot", "greenkeeper", "devin-ai-integration"]);
+
+export function isBot(a: Actor): boolean {
+  if (!a) return true; // deleted account: can't tell, leave it out
+  const l = a.login.toLowerCase();
+  return a.__typename === "Bot" || l.endsWith("[bot]") || l.endsWith("-bot") || l.endsWith("_bot") || BOTS.has(l);
+}
+
+/** Closed and merged PRs for one shared window of up to `maxDays`. Both lists are complete inside the window. */
+export async function fetchPRs(token: string, o: string, n: string, maxDays = 90, pages = 2) {
+  const floor = Date.now() - maxDays * DAY;
+  const list = async (state: "MERGED" | "CLOSED") => {
+    const out: PR[] = [];
+    let a: string | null = null, cut = floor;
+    for (let i = 0; i < pages; i++) {
+      const r: { repository: { pullRequests: Page } | null } = await gql(token, PRS, { o, n, a, s: [state] });
+      if (!r.repository) throw new GhError("Repo not found", 404);
+      const page = r.repository.pullRequests;
+      for (const p of page.nodes) out.push({ ...p, merged: state === "MERGED" });
+      const oldest = page.nodes.length ? Date.parse(page.nodes[page.nodes.length - 1].updatedAt) : floor;
+      a = page.pageInfo.endCursor;
+      // a list sorted by updatedAt holds every PR closed after its oldest updatedAt
+      if (!page.pageInfo.hasNextPage || oldest <= floor) { cut = floor; break; }
+      cut = oldest;
+      if (oldest <= Date.now() - ENOUGH_DAYS * DAY) break; // a month of PRs is a fair sample: skip the extra second
+    }
+    return { out, cut };
+  };
+  const [m, c] = await Promise.all([list("MERGED"), list("CLOSED")]);
+  const start = Math.max(m.cut, c.cut, floor);
+  const inWin = (p: PR) => Date.parse(p.closedAt) >= start;
+  return { merged: m.out.filter(inWin), closed: c.out.filter(inWin), start, capped: start > floor };
+}
