@@ -181,7 +181,7 @@ export default function App() {
               autoCorrect="off"
               className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
-            <DitherButton type="submit" color={BRAND} variant="gradient" disabled={check.pending !== null} className="h-10 rounded-lg px-5 text-sm font-medium transition-transform active:scale-[0.97]">
+            <DitherButton type="submit" color={BRAND} disabled={check.pending !== null} className="h-10 rounded-lg px-5 text-sm font-medium transition-transform active:scale-[0.97]">
               Check
             </DitherButton>
           </motion.form>

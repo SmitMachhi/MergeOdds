@@ -415,7 +415,7 @@ export function How() {
             </ul>
           </Reveal>
           <Reveal delay={0.1} className="md:justify-self-end md:self-end">
-            <DitherButton color={BRAND} variant="gradient" onClick={() => location.assign("/")} className="h-12 rounded-lg px-6 text-sm font-medium transition-transform active:scale-[0.97]">
+            <DitherButton color={BRAND} onClick={() => location.assign("/")} className="h-12 rounded-lg px-6 text-sm font-medium transition-transform active:scale-[0.97]">
               Check repos
             </DitherButton>
           </Reveal>

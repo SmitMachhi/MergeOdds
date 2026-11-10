@@ -1,8 +1,10 @@
 import type { AreaVariant } from "./chart-context"
 import { rgb, type Seed } from "./palette"
 
-// 4×4 ordered (Bayer) matrix, normalized to 0–1 thresholds — the exact matrix
-// the legacy chart dithers with.
+// The dither engine shared by the charts, the button and the gradient: one 4×4 ordered (Bayer) matrix, the
+// column painter, the glow layer and the motion check.
+
+// 4×4 ordered (Bayer) matrix, normalized to 0–1 thresholds.
 export const BAYER = [
   [0, 8, 2, 10],
   [12, 4, 14, 6],
@@ -26,7 +28,6 @@ export type PaintOpts = {
   intensity: number // 0–1 hover lift
   dim: number // selection dim multiplier (0.3 dimmed, 1 normal)
   stacked: boolean // denser + solid floor when layers stack
-  sparse?: number // raise the dither threshold (thin out) — front layers
 }
 
 // Colour vs opacity — the guiding rule for the whole engine:
@@ -53,7 +54,7 @@ export function paintColumn(
   top: number,
   floor: number,
   seed: Seed,
-  { variant, intensity, dim, stacked, sparse = 0 }: PaintOpts
+  { variant, intensity, dim, stacked }: PaintOpts
 ) {
   const t = Math.round(top)
   const f = Math.round(floor)
@@ -63,7 +64,7 @@ export function paintColumn(
     octx.fillRect(x, t, 1, 1)
     return
   }
-  const bias = (variant === "dotted" ? 0.12 : 0) + (stacked ? 0.2 : 0) - sparse
+  const bias = (variant === "dotted" ? 0.12 : 0) + (stacked ? 0.2 : 0)
   for (let y = t; y < f; y++) {
     // Inverted falloff: 0 at the top line, 1 at the floor — dense at the
     // bottom, thinning as it rises toward the outline.
@@ -94,21 +95,6 @@ export function paintColumn(
   }
 }
 
-/** Linear-resample a per-index fraction array to `cols` columns. */
-export function resample(src: number[], cols: number): number[] {
-  const out = new Array<number>(cols)
-  const last = Math.max(src.length - 1, 1)
-  for (let c = 0; c < cols; c++) {
-    const t = (c / Math.max(cols - 1, 1)) * last
-    const i = Math.floor(t)
-    const f = t - i
-    const a = src[i] ?? 0
-    const b = src[Math.min(i + 1, src.length - 1)] ?? a
-    out[c] = a + (b - a) * f
-  }
-  return out
-}
-
 /** Backing-canvas resolution for a plot rect — low-res, scaled up `pixelated`. */
 export function backingSize(width: number, height: number) {
   return {
@@ -121,30 +107,14 @@ export function backingSize(width: number, height: number) {
 // copy of the rendered canvas, composited additively (`plus-lighter`) so each
 // hue blooms in its own colour instead of a grey wash. Lives on a second canvas
 // layered over the crisp one (which stays sharp/pixelated).
-export type BloomLevel = "off" | "low" | "high" | "aura"
-export type BloomBlend = "plus-lighter" | "screen" | "lighten"
-export type BloomConfig = {
-  blur: number // px
-  brightness: number // 1 = none
-  opacity: number // 0–1
-  /** Saturation of the glow — >1 keeps it vividly in the dither's colour
-   * instead of washing toward white. */
-  saturate?: number
-  blend?: BloomBlend // additive by default
-}
-/** A preset name, a full config, or "off". */
-export type BloomInput = BloomLevel | BloomConfig
-
-const PRESET: Record<Exclude<BloomLevel, "off">, BloomConfig> = {
-  low: { blur: 3, brightness: 1.35, opacity: 0.7, saturate: 1.4 },
-  high: { blur: 5, brightness: 1.5, opacity: 0.78, saturate: 1.5 },
-  aura: { blur: 15, brightness: 2.9, opacity: 0.1, saturate: 3 },
-}
+/** "low" is the only preset the app uses. */
+export type BloomInput = "off" | "low"
+const LOW = { blur: 3, brightness: 1.35, opacity: 0.7, saturate: 1.4 }
 
 export type BloomStyle = {
   filter: string
   opacity: number
-  mixBlendMode: BloomBlend
+  mixBlendMode: "plus-lighter"
   imageRendering: "auto"
 }
 
@@ -154,11 +124,10 @@ export function bloomLayerStyle(
   active: boolean
 ): BloomStyle | null {
   if (!active || input === "off") return null
-  const cfg = typeof input === "string" ? PRESET[input] : input
   return {
-    filter: `blur(${cfg.blur}px) brightness(${cfg.brightness}) saturate(${cfg.saturate ?? 1})`,
-    opacity: cfg.opacity,
-    mixBlendMode: cfg.blend ?? "plus-lighter",
+    filter: `blur(${LOW.blur}px) brightness(${LOW.brightness}) saturate(${LOW.saturate})`,
+    opacity: LOW.opacity,
+    mixBlendMode: "plus-lighter",
     imageRendering: "auto",
   }
 }
@@ -169,7 +138,7 @@ export const easeInOutCubic = (t: number) =>
 export const easeOutCubic = (t: number) => 1 - (1 - t) ** 3
 export const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t)
 
-/** Whether the OS asks for reduced motion (snap + steady stars). */
+/** Whether the OS asks for reduced motion: entrances snap to their end. */
 export function prefersReducedMotion() {
   return (
     window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false

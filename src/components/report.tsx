@@ -2,9 +2,8 @@ import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import { ArrowUpRight, Ban, Check, GitFork, Star, TriangleAlert } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
-  Bar, BarChart, DitherGradient, Legend, Pie, PieChart, Tooltip, XAxis, YAxis, type ChartConfig,
+  Bar, BarChart, DitherGradient, Legend, PALETTE, Pie, PieChart, Tooltip, XAxis, YAxis, type ChartConfig,
 } from "@/components/dither-kit";
-import { PALETTE } from "@/components/dither-kit/palette";
 import { CATEGORY, compact, GRADE, PHASES, REASON_COLOR, TIER } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import { checkedAgo, plural } from "../../shared/text";
@@ -103,7 +102,7 @@ function Verdict({ a }: { a: Analysis }) {
       </ul>
 
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-14">
-        <DitherGradient from={t.color} direction="up" opacity={0.5} />
+        <DitherGradient from={t.color} opacity={0.5} />
       </div>
     </Card>
   );
