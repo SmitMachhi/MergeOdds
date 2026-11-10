@@ -3,11 +3,11 @@ import { useCallback, useEffect, useReducer, useRef, useState, type FormEvent, t
 import { DitherButton } from "@/components/dither-kit";
 import { Frame } from "@/components/frame";
 import { PrMark } from "@/components/pr-mark";
+import { Report } from "@/components/report";
 import { BRAND, fetchAnalysis } from "@/lib/ui";
 import { useSettled } from "@/lib/use-settled";
 import { cn } from "@/lib/utils";
 import { next, parseRepo, start, stateName } from "../shared/check";
-import type { Analysis } from "../shared/types";
 
 const EXAMPLES = ["vitejs/vite", "facebook/react", "honojs/hono"];
 const STAGES = ["Reading recent pull requests", "Finding the newcomers", "Reading the contributing guide", "Working out the odds"];
@@ -68,16 +68,6 @@ function Loading({ repo }: { repo: string }) {
         ))}
       </div>
     </motion.div>
-  );
-}
-
-/** A stand-in until the report page lands: the verdict and the odds in one line. */
-function Summary({ a }: { a: Analysis }) {
-  return (
-    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-24 text-center text-lg">
-      {a.repo.name}: {a.verdict.title}
-      {a.odds !== null && `, ${a.odds}%`}
-    </motion.p>
   );
 }
 
@@ -217,7 +207,7 @@ export default function App() {
 
         <AnimatePresence mode="wait">
           {view.status === "loading" && <Loading key="loading" repo={view.repo} />}
-          {view.status === "done" && <Summary key={view.data.repo.name + view.data.generatedAt} a={view.data} />}
+          {view.status === "done" && <Report key={view.data.repo.name + view.data.generatedAt} a={view.data} />}
         </AnimatePresence>
       </main>
     </Frame>

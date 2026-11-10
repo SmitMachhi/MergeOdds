@@ -335,3 +335,72 @@ function Guide({ a }: { a: Analysis }) {
     </Card>
   );
 }
+
+/** The repo owner's picture on a grey square. It fades in when it arrives, so it never pops in.
+ *  One the browser already holds shows at once. */
+function Avatar({ src }: { src: string }) {
+  const ref = useRef<HTMLImageElement>(null);
+  const [state, setState] = useState<"waiting" | "held" | "arrived">("waiting");
+  useLayoutEffect(() => {
+    if (ref.current?.complete && ref.current.naturalWidth > 0) setState("held");
+  }, []);
+  return (
+    <span className="size-13 shrink-0 overflow-hidden rounded-lg bg-muted outline outline-1 -outline-offset-1 outline-white/10">
+      <img
+        ref={ref}
+        src={src}
+        alt=""
+        width={52}
+        height={52}
+        onLoad={() => setState((s) => (s === "waiting" ? "arrived" : s))}
+        className={cn("size-full", state === "waiting" && "opacity-0", state === "arrived" && "transition-opacity duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]")}
+      />
+    </span>
+  );
+}
+
+export function Report({ a }: { a: Analysis }) {
+  return (
+    <motion.div
+      initial="hidden"
+      animate="show"
+      // leaves with the same short fade as the home headline, so a new check or Back never cuts a full page of cards
+      exit={{ opacity: 0, transition: { duration: 0.15, ease: [0.16, 1, 0.3, 1] } }}
+      variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+      className="space-y-4"
+    >
+      <motion.header variants={rise} className="flex items-center gap-4">
+        <Avatar src={`${a.repo.avatar}${a.repo.avatar.includes("?") ? "&" : "?"}s=112`} />
+        <div className="min-w-0 flex-1">
+          <a href={a.repo.url} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-1 text-lg font-medium">
+            {a.repo.name}
+            <ArrowUpRight strokeWidth={1.5} className="size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+          </a>
+          <p className="truncate text-sm text-muted-foreground">{a.repo.description}</p>
+        </div>
+        <div className="hidden shrink-0 items-center gap-4 text-xs text-muted-foreground sm:flex">
+          <span className="inline-flex items-center gap-1"><Star strokeWidth={1.5} className="size-4" />{compact(a.repo.stars)}</span>
+          <span className="inline-flex items-center gap-1"><GitFork strokeWidth={1.5} className="size-4" />{compact(a.repo.forks)}</span>
+          {a.repo.language && <span>{a.repo.language}</span>}
+        </div>
+      </motion.header>
+
+      <div className="grid gap-4 md:grid-cols-5">
+        <Verdict a={a} />
+        <Scorecard a={a} />
+      </div>
+      <Merged a={a} />
+      <Guide a={a} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Flow a={a} />
+        <Reasons a={a} />
+      </div>
+
+      {/* pb-80 keeps this line above the page's dither wash, which is 18rem tall */}
+      <motion.footer variants={rise} className="px-1 pt-2 pb-80 text-xs text-muted-foreground">
+        <Rule2 className="mb-3" />
+        {checkedAgo(a.generatedAt)}. Read {plural(a.window.merged + a.window.closed, "PR")} and answered {plural(a.checks, "question")} about them in {(a.tookMs / 1000).toFixed(1)}s
+      </motion.footer>
+    </motion.div>
+  );
+}
