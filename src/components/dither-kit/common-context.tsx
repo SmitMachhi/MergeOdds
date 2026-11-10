@@ -1,48 +1,32 @@
-"use client"
-
 import { createContext, use } from "react"
-import type { Seed } from "./palette"
+import type { Texture } from "./dither-paint"
+import type { DitherColor, Seed } from "./palette"
 
-/** A single tooltip row — one series (cartesian/radar) or one slice (pie). */
-export type TooltipItem = {
-  name: string
-  label: string
-  value: number
-  seed: Seed
-  dimmed: boolean
-}
+/** Each series (bar chart) or slice (pie chart): its label and colour. Bars also take a texture, "gradient" by default. */
+export type ChartConfig = Record<string, { label?: string; color: DitherColor; texture?: Texture }>
 
-/**
- * The minimal surface shared by every chart family, so `<Legend>` and
- * `<Tooltip>` work identically whether they sit in a cartesian, bar, or polar
- * root. Each root publishes one of these alongside its family-specific context.
- */
+export type Margins = { top: number; right: number; bottom: number; left: number }
+
+/** One tooltip row: one series (bar chart) or one slice (pie chart). */
+export type TooltipItem = { name: string; label: string; value: number; seed: Seed }
+
+/** What `<Legend>` and `<Tooltip>` read, so both work the same in the bar chart and the pie chart. */
 export type CommonChart = {
-  names: string[] // legend entries — series keys (cartesian) or slice names (pie)
+  names: string[] // legend entries: series keys (bar) or slice names (pie)
   labelOf: (name: string) => string
   seedOf: (name: string) => Seed
-  selectedDataKey: string | null
-  selectDataKey: (key: string | null) => void
-  /** Transient legend-hover emphasis — spotlights one series (others dim)
-   * while the pointer rests on its legend entry. Selection still wins. */
-  focusDataKey: string | null
-  setFocusDataKey: (key: string | null) => void
   hoverIndex: number | null
   heading: (index: number, labelKey?: string) => string | null
   itemsAt: (index: number) => TooltipItem[]
   ready: boolean
   tooltipLeft: number // clamped px for the floating tooltip
-  tooltipTop: number // px — follows the hovered node (cartesian) / cursor (polar)
+  tooltipTop: number // px: follows the hovered bar (bar) or the cursor (pie)
 }
 
 export const CommonChartContext = createContext<CommonChart | null>(null)
 
 export function useCommonChart() {
   const ctx = use(CommonChartContext)
-  if (!ctx) {
-    throw new Error(
-      "<Legend /> / <Tooltip /> must be used within a chart root."
-    )
-  }
+  if (!ctx) throw new Error("<Legend /> and <Tooltip /> must be used within a chart.")
   return ctx
 }

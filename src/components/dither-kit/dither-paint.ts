@@ -1,4 +1,3 @@
-import type { AreaVariant } from "./chart-context"
 import { rgb, type Seed } from "./palette"
 
 // The dither engine shared by the charts, the button and the gradient: one 4×4 ordered (Bayer) matrix, the
@@ -23,8 +22,11 @@ export const BORDER_ALPHA = 0.72
 // background never shows through as stark white on a light theme.
 export const OFF_TIER = 0.4
 
+/** The bar textures the report uses: a dither fading up, or the same dither with diagonal gaps. */
+export type Texture = "gradient" | "hatched"
+
 export type PaintOpts = {
-  variant: AreaVariant
+  variant: Texture
   intensity: number // 0–1 hover lift
   dim: number // selection dim multiplier (0.3 dimmed, 1 normal)
   stacked: boolean // denser + solid floor when layers stack
@@ -64,21 +66,16 @@ export function paintColumn(
     octx.fillRect(x, t, 1, 1)
     return
   }
-  const bias = (variant === "dotted" ? 0.12 : 0) + (stacked ? 0.2 : 0)
+  const bias = stacked ? 0.2 : 0
   for (let y = t; y < f; y++) {
     // Inverted falloff: 0 at the top line, 1 at the floor — dense at the
     // bottom, thinning as it rises toward the outline.
     let density = (y - t) / depth
     if (stacked) density = 0.5 + 0.5 * density
     if (variant === "hatched" && ((x + y) & 3) >= 2) continue
-    const lit =
-      variant === "solid" ||
-      density > BAYER[y & 3][x & 3] - 0.1 * intensity - bias
-    // "dotted" keeps real gaps for its open look; every other variant covers
-    // the cell and lets the dither ride the alpha (on = full tier, off = a
-    // faint tint) so nothing shows the background through as white.
-    if (variant === "dotted" && !lit) continue
-    // Density → alpha (see the colour-vs-opacity note above).
+    // Every cell is covered: the dither rides the alpha (on = full tier, off = a faint tint), so nothing shows the
+    // background through. Density → alpha (see the colour-vs-opacity note above).
+    const lit = density > BAYER[y & 3][x & 3] - 0.1 * intensity - bias
     const k = (0.3 + density * 0.7) * (1 + 0.22 * intensity)
     const alpha = clamp01((lit ? k : k * OFF_TIER) * dim)
     octx.fillStyle = rgb(seed.fill, 1, alpha)
@@ -107,30 +104,12 @@ export function backingSize(width: number, height: number) {
 // copy of the rendered canvas, composited additively (`plus-lighter`) so each
 // hue blooms in its own colour instead of a grey wash. Lives on a second canvas
 // layered over the crisp one (which stays sharp/pixelated).
-/** "low" is the only preset the app uses. */
-export type BloomInput = "off" | "low"
-const LOW = { blur: 3, brightness: 1.35, opacity: 0.7, saturate: 1.4 }
-
-export type BloomStyle = {
-  filter: string
-  opacity: number
-  mixBlendMode: "plus-lighter"
-  imageRendering: "auto"
-}
-
-/** Style for the bloom *layer* canvas (a blurred, additive copy). null when off. */
-export function bloomLayerStyle(
-  input: BloomInput,
-  active: boolean
-): BloomStyle | null {
-  if (!active || input === "off") return null
-  return {
-    filter: `blur(${LOW.blur}px) brightness(${LOW.brightness}) saturate(${LOW.saturate})`,
-    opacity: LOW.opacity,
-    mixBlendMode: "plus-lighter",
-    imageRendering: "auto",
-  }
-}
+export const BLOOM = {
+  filter: "blur(3px) brightness(1.35) saturate(1.4)",
+  opacity: 0.7,
+  mixBlendMode: "plus-lighter",
+  imageRendering: "auto",
+} as const
 
 // Easing — gentle start + soft settle so entrances don't feel linear.
 export const easeInOutCubic = (t: number) =>

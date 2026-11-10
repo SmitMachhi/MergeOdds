@@ -1,7 +1,7 @@
 import { ArrowUpRight, Ban, Check, TriangleAlert } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
-import { Bar, BarChart, Legend, PALETTE, Pie, PieChart, Tooltip, XAxis, YAxis, type ChartConfig } from "@/components/dither-kit";
+import { BarChart, Legend, PALETTE, PieChart, Tooltip, XAxis, YAxis, type ChartConfig } from "@/components/dither-kit";
 import { Card, Rule2, spring } from "@/components/card";
 import { CATEGORY, PHASES, REASON_COLOR } from "@/lib/ui";
 import { cn } from "@/lib/utils";
@@ -61,17 +61,15 @@ export function Merged({ a }: { a: Analysis }) {
 }
 
 export function Flow({ a }: { a: Analysis }) {
-  const config: ChartConfig = { merged: { label: "Merged", color: "green" }, closed: { label: "Rejected", color: "red" } };
+  const config: ChartConfig = { merged: { label: "Merged", color: "green" }, closed: { label: "Rejected", color: "red", texture: "hatched" } };
   return (
     <Card title="Outside PRs over time" hint={`${a.outside.merged} merged, ${a.outside.closed} rejected`}>
       <div className="h-56">
-        <BarChart data={a.series} config={config} stackType="stacked" bloom="low">
+        <BarChart data={a.series} config={config}>
           <XAxis dataKey="label" maxTicks={5} />
           <YAxis />
           <Legend />
           <Tooltip labelKey="label" />
-          <Bar dataKey="merged" variant="gradient" />
-          <Bar dataKey="closed" variant="hatched" />
         </BarChart>
       </div>
     </Card>
@@ -92,9 +90,8 @@ export function Reasons({ a }: { a: Analysis }) {
     <Card title={title} hint={`from ${plural(total, "closing thread")}`}>
       <div className="flex flex-col items-center gap-6 sm:flex-row">
         <div className="size-48 shrink-0">
-          <PieChart data={a.closeReasons} config={config} dataKey="count" nameKey="reason" innerRadius={0.55} bloom="low">
+          <PieChart data={a.closeReasons} config={config} dataKey="count" nameKey="reason" innerRadius={0.55}>
             <Tooltip />
-            <Pie variant="gradient" />
           </PieChart>
         </div>
         <ul className="w-full space-y-2 text-sm">
