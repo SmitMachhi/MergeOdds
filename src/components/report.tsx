@@ -108,3 +108,45 @@ function Verdict({ a }: { a: Analysis }) {
     </Card>
   );
 }
+
+/** A grade as a level meter: the dither fill climbs with the grade, and the letter sits on a solid plate in the middle. */
+export function GradeTile({ grade }: { grade: Metric["grade"] }) {
+  const g = grade ? GRADE[grade] : null;
+  return (
+    <span className={cn("relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-md border border-current/40", g ? g.text : "text-zinc-500")}>
+      <motion.span
+        aria-hidden
+        className={cn("absolute inset-x-0 bottom-0 origin-bottom opacity-60", g ? g.fill : "dither-25")}
+        style={{ height: g ? g.height : "100%" }}
+        initial={{ scaleY: 0 }}
+        animate={{ scaleY: 1 }}
+        transition={{ ...spring, delay: 0.3 }}
+      />
+      {/* the plate is a deeper shade of the grade's colour, so the white letter reads on every grade */}
+      <span className={cn("relative grid size-6 place-items-center rounded-sm text-lg leading-none font-semibold text-white", g ? g.plate : "bg-zinc-600")}>
+        {grade ?? "?"}
+      </span>
+    </span>
+  );
+}
+
+function MetricRow({ m }: { m: Metric }) {
+  return (
+    <li className="flex items-center gap-4 py-3">
+      <GradeTile grade={m.grade} />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm">{m.label}</p>
+        <p className="mt-0.5 text-xs text-pretty text-muted-foreground">{m.math}</p>
+      </div>
+      <span className="shrink-0 text-base font-medium">{m.value}</span>
+    </li>
+  );
+}
+
+function Scorecard({ a }: { a: Analysis }) {
+  return (
+    <Card title="Scorecard" hint={`outside PRs, last ${plural(a.window.days, "day")}`} className="md:col-span-3">
+      <ul className="-my-3 divide-y divide-border/60">{a.scorecard.map((m) => <MetricRow key={m.id} m={m} />)}</ul>
+    </Card>
+  );
+}
