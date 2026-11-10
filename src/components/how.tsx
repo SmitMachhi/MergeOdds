@@ -178,3 +178,30 @@ function PixelGrid({ mode }: { mode: "read" | "outside" }) {
     </div>
   );
 }
+
+// ---- step 3: the three outcomes ----
+
+function Outcomes() {
+  const parts = [
+    { label: "merged", count: EX.newcomers.merged, fill: "bg-emerald-400" },
+    { label: "rejected", count: EX.newcomers.rejected, fill: "bg-red-400" },
+    { label: "stuck open", count: EX.newcomers.stuck, fill: "text-zinc-400 dither-50" },
+  ];
+  return (
+    <div>
+      <motion.div className="flex h-4 origin-left gap-0.5" initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={VIEW} transition={draw}>
+        {parts.map((p) => (
+          <div key={p.label} className={cn("h-full", p.fill)} style={{ flex: `${p.count} 0 0` }} />
+        ))}
+      </motion.div>
+      <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+        {parts.map((p, i) => (
+          <motion.li key={p.label} className="inline-flex items-center gap-2" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={VIEW} transition={{ ...enter, delay: 0.2 + i * 0.05 }}>
+            <span className={cn("size-2", p.fill)} />
+            <span className="text-foreground">{p.count}</span> {p.label}
+          </motion.li>
+        ))}
+      </ul>
+    </div>
+  );
+}
