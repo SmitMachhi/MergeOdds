@@ -72,3 +72,12 @@ each rule, what kind of change each PR is, and why each closed PR was closed. Ev
 A checked repo is stored in Workers KV for 7 days (the `RESULTS` binding), and the report says how old it is.
 Add `&fresh=1` to run a new check and replace the stored one. To throw out every stored result after a change to
 the math, bump `VERSION` in `worker/index.ts`.
+
+## Credits and licences
+
+The app's own code is under the MIT licence: see `LICENSE`.
+
+- **dither-kit** (`src/components/dither-kit/`): charts, the button and the gradient, copied in from
+  [Boring-Software-Inc/dither-kit](https://github.com/Boring-Software-Inc/dither-kit) with the shadcn CLI. MIT.
+- **Paper Mono** (`src/assets/fonts/`): the typeface, by Paper. SIL Open Font License: see `OFL.txt` next to it.
+- **Octicons**: the pull request icon, by GitHub. MIT.
