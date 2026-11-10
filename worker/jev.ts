@@ -265,3 +265,42 @@ export function typesRequest(repo: string, description: string, prs: { number: n
   }
   return { state: { repository: repo, about: description }, questions };
 }
+
+// ---------- 4. Why outside PRs got closed ----------
+
+export const REASONS: Record<CloseReason, { label: string; avoidable: boolean; when: string }> = {
+  inactive: { label: "Went stale", avoidable: true, when: "Closed because nobody worked on it for a long time, often by a stale bot" },
+  author_withdrew: { label: "Author withdrew it", avoidable: true, when: "The author closed it themself, for example to redo it, or because it was opened by mistake" },
+  broke_rules: { label: "Broke a rule", avoidable: true, when: "Closed because it broke a contribution rule, such as no linked issue, no assignment, an unsigned CLA, or an AI policy" },
+  low_quality: { label: "Low effort or spam", avoidable: true, when: "Closed as spam, a trivial change, or low-effort work" },
+  // LocalAI does this a lot: a maintainer bundles the commits into their own PR, keeps the authorship, closes the original
+  landed_elsewhere: { label: "Merged another way", avoidable: false, when: "A maintainer took this pull request's own commits and merged them through a different pull request or directly, keeping the author's credit" },
+  superseded: { label: "Someone else fixed it", avoidable: false, when: "Closed because someone else's separate pull request or commit already solved the same problem" },
+  not_wanted: { label: "Maintainers said no", avoidable: false, when: "Maintainers decided they do not want this change in the project" },
+  no_explanation: { label: "No reason given", avoidable: false, when: "Nothing in the pull request says why it was closed" },
+};
+
+export type ClosedPR = {
+  number: number; title: string; daysOpen: number; closedBy: "the author" | "a maintainer" | "a bot" | "unknown";
+  lastComments: { from: "the author" | "a maintainer" | "a bot" | "someone else"; text: string }[];
+};
+
+export function reasonsRequest(repo: string, prs: ClosedPR[]) {
+  if (!prs.length) return null;
+  const questions: Record<string, Question> = {};
+  const criteria = Object.fromEntries(Object.entries(REASONS).map(([k, v]) => [k, v.when]));
+  for (const pr of prs) {
+    questions[`why_${pr.number}`] = {
+      type: "choice",
+      instructions: {
+        question: "Why was this pull request closed without being merged?",
+        pull_request: { title: pr.title, days_open: pr.daysOpen, closed_by: pr.closedBy, last_comments: pr.lastComments },
+      },
+      criteria,
+    };
+  }
+  return {
+    state: { repository: repo, note: "Each question describes one pull request from an outside contributor that was closed without merging." },
+    questions,
+  };
+}
