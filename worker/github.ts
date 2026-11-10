@@ -120,3 +120,49 @@ export async function fetchPRs(token: string, o: string, n: string, maxDays = 90
   const inWin = (p: PR) => Date.parse(p.closedAt) >= start;
   return { merged: m.out.filter(inWin), closed: c.out.filter(inWin), start, capped: start > floor };
 }
+
+/** PRs opened between `from` and `to` that are still open: the ones nobody merged or closed. */
+export async function fetchStillOpen(token: string, repo: string, from: number, to: number) {
+  const day = (t: number) => new Date(t).toISOString().slice(0, 10);
+  const q = `repo:${repo} is:pr is:open draft:false created:${day(from)}..${day(to)}`;
+  const r = await gql<{ search: { issueCount: number; nodes: (OpenPR | Record<string, never>)[] } }>(token,
+    `query($q:String!){ search(query:$q, type:ISSUE, first:100){ issueCount nodes{ ... on PullRequest{ number title url createdAt authorAssociation ${ACTOR} } } } }`, { q });
+  return { total: r.search.issueCount, prs: r.search.nodes.filter((n): n is OpenPR => "number" in n) };
+}
+
+// `size` is asked per PR on purpose: additions and deletions on the list query cost about 7 seconds per 100 PRs
+export type Want = { number: number; response?: boolean; comments?: boolean; closer?: boolean; size?: boolean };
+
+/** Per-PR extras, asked for by number in small parallel batches. */
+export async function fetchDetails(token: string, o: string, n: string, wants: Want[]) {
+  const out = new Map<number, Detail>();
+  const chunks: Want[][] = [];
+  for (let i = 0; i < wants.length; i += 10) chunks.push(wants.slice(i, i + 10));
+  await Promise.all(chunks.map(async (chunk) => {
+    const parts = chunk.map((w) => `p${w.number}: pullRequest(number:${w.number}){
+      ${w.response ? `early: comments(first:2){nodes{${ACTOR} authorAssociation createdAt}} reviews(first:2){nodes{${ACTOR} authorAssociation createdAt}}` : ""}
+      ${w.comments ? `last: comments(last:3){nodes{${ACTOR} authorAssociation bodyText}}` : ""}
+      ${w.closer ? `timelineItems(last:1,itemTypes:[CLOSED_EVENT]){nodes{... on ClosedEvent{closer{__typename} actor{__typename login}}}}` : ""}
+      ${w.size ? "additions deletions" : ""}
+      __typename }`);
+    const r = await gql<{ repository: Record<string, Detail> }>(token, `query($o:String!,$n:String!){ repository(owner:$o,name:$n){ ${parts.join("\n")} } }`, { o, n });
+    for (const w of chunk) if (r.repository?.[`p${w.number}`]) out.set(w.number, r.repository[`p${w.number}`]);
+  }));
+  return out;
+}
+
+/** For each login: true when they had no merged PR (or, for bot-merged repos, no finished PR at all) before `since`. */
+export async function firstTimers(token: string, repo: string, logins: string[], since: string, botMerge: boolean) {
+  const out = new Map<string, boolean>();
+  const chunks: string[][] = [];
+  for (let i = 0; i < logins.length; i += 6) chunks.push(logins.slice(i, i + 6));
+  await Promise.all(chunks.map(async (chunk) => {
+    const parts = chunk.map((l, i) => {
+      const q = botMerge ? `repo:${repo} is:pr author:${l} closed:<${since}` : `repo:${repo} is:pr is:merged author:${l} merged:<${since}`;
+      return `a${i}: search(query: ${JSON.stringify(q)}, type: ISSUE) { issueCount }`;
+    });
+    const r = await gql<Record<string, { issueCount: number }>>(token, `query{ ${parts.join("\n")} }`);
+    chunk.forEach((l, i) => out.set(l, r[`a${i}`]?.issueCount === 0));
+  }));
+  return out;
+}
