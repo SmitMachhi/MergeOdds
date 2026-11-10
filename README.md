@@ -4,13 +4,14 @@ Paste a GitHub repo. See the odds that your PR gets merged.
 
 This repo is being built in the open, one small pull request at a time. Right now the API reads a repo's recent
 pull requests from GitHub, asks the classifier about its rules and closed PRs, and answers with the odds, six
-grades and one verdict as JSON. The page that shows them comes next.
+grades and one verdict. The home page takes a repo and runs the check. For now it shows the verdict in one line:
+the full report page comes next.
 
 - **Worker:** [Hono](https://hono.dev) on Cloudflare Workers (`worker/`). One endpoint: `GET /api/analyze?repo=owner/name`.
 - **GitHub data:** every read is in `worker/github.ts`: the repo, its contributor docs, and up to 400 recent PRs.
 - **Judgment:** [Jev](https://typesafe.ai) answers typed questions about the repo's rules and closed PRs. Every
   question is in `worker/jev.ts`.
-- **UI:** Vite, React and Tailwind (`src/`).
+- **UI:** Vite, React, Tailwind, shadcn, motion, and [dither-kit](https://tripwire.sh/dither-kit) (`src/`).
 
 ## Run it
 
