@@ -13,7 +13,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 // Every string and every piece of JSX text in these files reaches the page.
 const PAGE_FILES = ["index.html", "src/App.tsx", "src/components/report.tsx", "src/components/how.tsx", "src/components/frame.tsx", "src/lib/ui.ts", "shared/types.ts", "shared/text.ts", "shared/check.ts", "shared/rules.ts", "shared/outcomes.ts"];
 // In the worker only some lines reach the page: labels, scorecard sums, verdict titles and reasons.
-const WORKER_FILES = { "worker/analyze.ts": /\b(label|value|math|title)\s*[:=]|reasons\.push\(/, "worker/jev.ts": /\blabel:/, "worker/index.ts": /error:/ };
+const WORKER_FILES = { "worker/analyze.ts": /\b(label|value|math|title)\s*[:=]|reasons\.push\(/, "worker/jev.ts": /\blabel:/, "worker/index.ts": /error:/, "worker/budget.ts": /^export const [A-Z_]+ = "/ };
 
 // Words ending in "ly" that are not adverbs.
 // "likely" is on the list for "how likely": there it is an adjective. Do not write "will likely".

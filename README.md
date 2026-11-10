@@ -57,6 +57,15 @@ npm run deploy
 `GITHUB_TOKEN` needs no scopes: it only reads public repos. The first deploy creates the KV namespace for
 stored results.
 
+## Limits on new checks
+
+The site is open to everyone, and each new check spends GitHub and classifier quota. Two guards keep that bounded.
+Stored results cost nothing, so they pass both.
+
+- **Per visitor:** 5 new checks per minute (`ratelimits` in `wrangler.jsonc`). The sixth answers 429.
+- **Per day:** 300 new checks for the whole site (`DAILY_NEW_CHECKS` in `worker/budget.ts`). After that, new checks
+  answer 429 until midnight UTC, and stored results still open.
+
 ## The math
 
 A newcomer is an author with no merged PR in the repo before the window (up to 90 days, up to 400 PRs).

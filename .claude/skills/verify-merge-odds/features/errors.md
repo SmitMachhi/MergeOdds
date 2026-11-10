@@ -10,6 +10,10 @@ API returns the same message as JSON with a matching status.
 - `error-instant` shows the bad-input message on the page with no request to the API and no new history entry.
 - `error-stays` keeps the headline and the repo box on the page, with no report.
 - `error-clear` keeps the message above the red dither wash. The journey fails when `gapAboveWash` is under 0.
+- `error-too-fast` answers the sixth new check of one visitor within one minute with
+  `Too many new checks. Wait one minute and try again` and status 429. Stored results still answer 200.
+- `error-budget` answers new checks with `The site has run all its new checks for today. Stored results still open.
+  Try again tomorrow` and status 429 once the site has run 300 of them that day.
 - `error-keys` answers with `The server is missing its API keys` and status 500 when the server has no keys.
 
 ## How to get to it (user POV)
@@ -32,6 +36,12 @@ Preconditions:
 
 ## Gotchas
 
+- `error-too-fast` needs a visitor address, which only Cloudflare sets. On the private copy, send one yourself:
+  `curl -H "cf-connecting-ip: 203.0.113.9" "<url>/api/analyze?repo=octocat/this-repo-does-not-exist-zz9"` six times
+  within one minute. The first five answer 404 and the sixth 429. No journey drives it: `$A check` and the page
+  send no such address, so they never meet this limit.
+- `error-budget` cannot be driven without 300 new checks. `tests/budget.test.mjs` covers the count. Report the
+  live path as not verified.
 - `error-keys` cannot be driven: `$A launch` refuses to start without both keys. Report it as not verified.
 - The message sits in an element with `role="alert"`. Wait for its text to equal the expected message: the second submit replaces the first message after a moment.
 - A GitHub rate limit or outage returns status 502 with GitHub's own message. That is a pass for the app and a reason to stop the run.
