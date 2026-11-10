@@ -71,3 +71,18 @@ export function tally(prs: OutsidePR[]) {
   for (const who of people.values()) if (who.isNew) newcomers[who.end]++;
   return { outcomes, newcomers };
 }
+
+export function quantile(xs: number[], q: number) {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const i = (s.length - 1) * q, lo = Math.floor(i);
+  return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (i - lo);
+}
+
+const MIN_DEADLINE = 7, MAX_DEADLINE = 60, DEADLINE_WITH_FEW_MERGES = 30, FEW_MERGES = 5;
+
+/** Days an open PR may wait before it counts as stuck: the time 9 in 10 merged outside PRs took to merge here. */
+export function deadlineDays(daysToMerge: number[]) {
+  if (daysToMerge.length < FEW_MERGES) return DEADLINE_WITH_FEW_MERGES;
+  return Math.min(MAX_DEADLINE, Math.max(MIN_DEADLINE, Math.ceil(quantile(daysToMerge, 0.9)!)));
+}
