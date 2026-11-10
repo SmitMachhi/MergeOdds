@@ -136,7 +136,7 @@ def scroll_through():
 
 # The journeys live next to this file, one idea per file. They run inside this script, so they share its helpers.
 HERE = ".claude/skills/verify-merge-odds/scripts"
-for part in ["motion_live.py", "motion_pages.py"] if JOURNEY == "motion" else ["journeys.py"]:
+for part in ["journeys.py", "motion_live.py", "motion_pages.py"]:
     exec(open(os.path.join(HERE, part), encoding="utf-8").read())
 
 
