@@ -1,0 +1,23 @@
+@import "tailwindcss";
+/* Paper Mono by Paper (https://github.com/paper-design/paper-mono), SIL Open Font License: see assets/fonts/OFL.txt */
+@font-face {
+    font-family: "Paper Mono";
+    src: url("./assets/fonts/PaperMono.woff2") format("woff2");
+    font-weight: 100 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@theme inline {
+    --font-sans: "Paper Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --font-mono: "Paper Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-neutral-950 text-neutral-50;
+  }
+}
