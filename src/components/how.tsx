@@ -137,3 +137,44 @@ function Table({ head, rows, cols, compact, ordered }: { head: string[]; rows: (
     </div>
   );
 }
+
+// ---- steps 1 and 2: one square per PR ----
+
+type Cell = { kind: "merged" | "closed" | "empty"; outside: boolean };
+
+/** 400 squares, one per PR we can read. The order is shuffled once, with a fixed seed, so it never flickers. */
+function useCells(): Cell[] {
+  return useMemo(() => {
+    const cells: Cell[] = [];
+    const push = (kind: Cell["kind"], total: number, outside: number) => {
+      for (let i = 0; i < total; i++) cells.push({ kind, outside: i < outside });
+    };
+    push("merged", EX.read.merged, EX.outside.merged);
+    push("closed", EX.read.closed, EX.outside.closed);
+    let seed = 7;
+    for (let i = cells.length - 1; i > 0; i--) {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      const j = seed % (i + 1);
+      [cells[i], cells[j]] = [cells[j], cells[i]];
+    }
+    while (cells.length < 400) cells.push({ kind: "empty", outside: false });
+    return cells;
+  }, []);
+}
+
+const CELL = { merged: "bg-emerald-400", closed: "bg-red-400", empty: "text-white/20 dither-25" };
+
+/** `mode="read"`: the squares arrive in a wave. `mode="outside"`: staff and bot PRs dim, outsiders stay lit. */
+function PixelGrid({ mode }: { mode: "read" | "outside" }) {
+  const cells = useCells();
+  const ref = useRef<HTMLDivElement>(null);
+  const seen = useInView(ref, VIEW);
+  return (
+    <div ref={ref} aria-hidden className="grid w-fit grid-cols-[repeat(25,minmax(0,1fr))] gap-1">
+      {cells.map((c, i) => {
+        const opacity = mode === "read" ? (seen ? 1 : 0) : seen && !c.outside ? 0.12 : 1;
+        return <span key={i} className={cn("size-2 transition-opacity duration-300 motion-reduce:transition-none sm:size-3", CELL[c.kind])} style={{ opacity, transitionDelay: `${i * 1.5}ms` }} />;
+      })}
+    </div>
+  );
+}
