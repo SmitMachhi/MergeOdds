@@ -3,8 +3,8 @@
 Paste a GitHub repo. See the odds that your PR gets merged.
 
 This repo is being built in the open, one small pull request at a time. Right now the API reads a repo's recent
-pull requests from GitHub and says how many were merged and how many were closed. The code that works out the
-odds, the grades and the verdict is in, with its tests. The next pull request puts it behind the API.
+pull requests from GitHub, asks the classifier about its rules and closed PRs, and answers with the odds, six
+grades and one verdict as JSON. The page that shows them comes next.
 
 - **Worker:** [Hono](https://hono.dev) on Cloudflare Workers (`worker/`). One endpoint: `GET /api/analyze?repo=owner/name`.
 - **GitHub data:** every read is in `worker/github.ts`: the repo, its contributor docs, and up to 400 recent PRs.
@@ -21,6 +21,17 @@ npm run dev
 ```
 
 `GITHUB_TOKEN` needs no scopes: it only reads public repos.
+
+## Deploy
+
+```bash
+npx wrangler secret put GITHUB_TOKEN
+npx wrangler secret put TYPESAFE_API_KEY
+npm run deploy
+```
+
+`GITHUB_TOKEN` needs no scopes: it only reads public repos. The first deploy creates the KV namespace for
+stored results.
 
 ## Test it
 
@@ -49,6 +60,10 @@ sum. "What gets merged" splits outside PRs by kind of change (Jev reads each tit
 
 Jev answers five requests of about 200 ms each: the rules, which guide lines are requirements, which line states
 each rule, what kind of change each PR is, and why each closed PR was closed. Every question is in `worker/jev.ts`.
+
+A checked repo is stored in Workers KV for 7 days (the `RESULTS` binding), and the report says how old it is.
+Add `&fresh=1` to run a new check and replace the stored one. To throw out every stored result after a change to
+the math, bump `VERSION` in `worker/index.ts`.
 
 ## Licence
 
