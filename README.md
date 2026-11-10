@@ -36,6 +36,16 @@ The test reads the text the page shows and fails on em dashes, exclamation marks
 and any mention of the engine. It also checks that a count of one reads as singular. Quotes from a repo's guide
 are shown word for word, so the test leaves them alone.
 
+## Check that a change to the math changes nothing
+
+```bash
+node .claude/skills/verify-merge-odds/scripts/tape.mjs record vitejs/vite apache/spark   # before the change
+node .claude/skills/verify-merge-odds/scripts/tape.mjs replay                            # after it
+```
+
+`record` saves every answer GitHub and the classifier gave for one real check. `replay` runs the worker as it is
+now against those answers, with no network, and prints `SAME` or the fields that differ.
+
 ## Deploy
 
 ```bash
