@@ -166,3 +166,27 @@ export async function firstTimers(token: string, repo: string, logins: string[],
   }));
   return out;
 }
+
+export function policyTexts(meta: Meta) {
+  const text = (b: Blob) => (b?.text ?? "").trim();
+  const guides: [string, Blob][] = [["c1", meta.c1], ["c2", meta.c2], ["c3", meta.c3], ["c4", meta.c4], ["c5", meta.c5]];
+  const guide = guides.find(([, b]) => text(b));
+  return {
+    guide: guide ? text(guide[1]) : "", guidePath: guide ? POLICY_PATHS[guide[0]] : "",
+    template: text(meta.t1) || text(meta.t2), aiPolicy: text(meta.ai),
+  };
+}
+
+const CLOSES_PRS = /pulls\.update|gh pr close|state:\s*['"]?closed|close-pull-request|closePullRequest|actions\/stale|close-pr|days-before-pr-close/i;
+
+/** Workflows that can close pull requests. Code finds the candidates; Jev judges what they do. */
+export function prClosingWorkflows(meta: Meta) {
+  const out: Record<string, string> = {};
+  for (const e of meta.wf?.entries ?? []) {
+    const t = e.object?.text;
+    if (!t || !/\.ya?ml$/.test(e.name)) continue;
+    if (CLOSES_PRS.test(t) && /pull_request|schedule|stale/.test(t)) out[e.name] = t.slice(0, 6000);
+    if (Object.keys(out).length >= 4) break;
+  }
+  return out;
+}
