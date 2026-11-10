@@ -136,3 +136,18 @@
     @apply font-sans;
     }
 }
+
+/* Ordered-dither fills in pure CSS: 2px pixels in the element's text color, at 25%, 50% or 75% coverage.
+   Used for quiet texture (bar tracks, rules, grade tiles). Text never sits on top of the 50% or 75% fills. */
+@utility dither-25 {
+  background-image: conic-gradient(currentColor 25%, transparent 0);
+  background-size: 4px 4px;
+}
+@utility dither-50 {
+  background-image: conic-gradient(currentColor 25%, transparent 0 50%, currentColor 0 75%, transparent 0);
+  background-size: 4px 4px;
+}
+@utility dither-75 {
+  background-image: conic-gradient(transparent 25%, currentColor 0);
+  background-size: 4px 4px;
+}
