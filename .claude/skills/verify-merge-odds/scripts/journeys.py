@@ -92,8 +92,8 @@ def how():
     else:
         js("window.scrollTo(0, 0)")
         time.sleep(0.5)
-        click('header a[href="/"]')  # the link at the top
-    until("location.pathname === '/' && !!document.querySelector(%s)" % json.dumps(INPUT), 20, "the home page after Check repos")
+        click('header a[href="/"]')  # the Merge Odds link at the top left
+    until("location.pathname === '/' && !!document.querySelector(%s)" % json.dumps(INPUT), 20, "the home page after leaving /how")
     return {"entry": entry, "steps": len([s for s in STEPS if s in text]), "back": js("location.pathname")}
 
 
