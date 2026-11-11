@@ -13,7 +13,7 @@ its answer, the sum, the grade cut-offs, the verdict table and the limits.
   Not counted for PRs the author closed) and who settles it (GitHub or Jev). The rows come from `shared/outcomes.ts`.
 - `how-requests` shows the five-row request table: Rules, Requirements, Quotes, PR kinds, Close reasons.
 - `how-sum` shows `(26 + 1) ÷ (93 + 2)` and counts up to `28%` once it is on screen.
-- `how-back-top` returns to the home page from the "Check repos" link at the top.
+- `how-back-top` returns to the home page from the `Merge Odds` link at the top left.
 - `how-back-button` returns to the home page from the "Check repos" button at the end.
 - `how-phone` shows the page at 390px wide with no sideways scroll.
 
@@ -21,7 +21,7 @@ its answer, the sum, the grade cut-offs, the verdict table and the limits.
 
 - On the home page, press `How it works?` under the icon, above the headline.
 - Open `/how`.
-- Leave with `Check repos` at the top right, `Merge Odds` at the top left, or the `Check repos` button at the end.
+- Leave with `Merge Odds` at the top left or the `Check repos` button at the end.
 
 ## Driving it with app.mjs and ui.py
 
@@ -40,5 +40,4 @@ Preconditions:
 - In a hidden browser tab the page does not animate. The script turns on focus emulation for its own tab. If `28%` is still missing, run the journey again once before reporting it.
 - The full-page screenshot of this page can fail with `Page.captureScreenshot timed out after 60s`. The text checks still ran. Report the picture as missing, and count it as a page bug only when a text check fails too.
 - The numbers on this page are fixed text from one check of vitejs/vite on 10 November 2026 (245 PRs, 34 days, 112 outside, 93 newcomers, 524 questions). That check is on tape: `tape.mjs replay vitejs/vite --out <folder>` prints it again while `.verify/tapes/vitejs-vite.json` exists. The journey checks the sum and the example answer by their exact text, so a new example means new text in `ui.py` too. They do not change when the math changes. A change to the math needs this page updated by hand.
-- The `Merge Odds` link at the top left is a way back that no journey drives yet. Report it as not verified.
 - Every other page must never name the engine. `npm test` enforces that, and the `check` journey checks it on the report.

@@ -22,7 +22,7 @@ on How it works arrive in order. Each one replaces a hard cut or a frozen screen
 - Loading: check a repo this copy has not stored, and watch the four squares under the stage text.
 - Home link: on a report, press `Merge Odds` at the top left.
 - Error message: type `not a repo`, press `Check`, then check a real repo.
-- Pages: on the home page press `How it works?`, then `Check repos` at the top right.
+- Pages: on the home page press `How it works?`, then `Merge Odds` at the top left.
 - Avatar: open a report. The picture left of the repo name fades in.
 - Tables: on `/how`, scroll to the table under step 3 and to the verdict table under step 6.
 
