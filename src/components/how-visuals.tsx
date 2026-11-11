@@ -98,13 +98,13 @@ export function Outcomes() {
 
 export function Question() {
   const rows: [string, ReactNode][] = [
-    ["Jev reads", <>PR #23901. Open less than 1 day. One maintainer closed it. Last comment: "This will be fixed by #23603"</>],
+    ["Jev reads", <>PR #23901. Open less than 1 day. Closed by maintainer. Last comment: "This will be fixed by #23603"</>],
     ["We ask", "Why was this pull request closed without being merged?"],
     ["Options", "Went stale, merged another way, someone else fixed it, maintainers said no, broke the rules, low effort, author withdrew it, no reason given"],
   ];
   return (
     <div className="rounded-xl border bg-card px-5">
-      <p className="border-b border-border/60 py-3 text-xs text-muted-foreground">Example: one real close-reason question</p>
+      <p className="border-b border-border/60 py-3 text-xs text-muted-foreground">Example: close-reason question from Vite</p>
       <dl className="divide-y divide-border/60">
         {rows.map(([term, text]) => (
           <div key={term} className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[5rem_1fr]">
