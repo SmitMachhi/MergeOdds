@@ -55,7 +55,7 @@ export function How() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={enter} className="pt-12 pb-8">
           <h1 className="text-4xl font-medium tracking-tight sm:text-6xl">How it works</h1>
           <p className="mt-4 max-w-prose leading-7 text-pretty text-muted-foreground">
-            Each check takes about 4 seconds. Lines marked Example come from one real check: {EX.repo} on 10 November 2026.
+            One check takes 4 to 7 seconds. Lines marked Example come from one real check of {EX.repo}, on 10 November 2026.
           </p>
         </motion.div>
 
@@ -64,12 +64,12 @@ export function How() {
           n={1}
           title="Fetch the repo"
           visual={<PixelGrid mode="read" />}
-          lead="We ask GitHub for the recent pull requests and the contributor docs."
-          caption={`Example: one square per PR, ${EX.read.merged} merged, ${EX.read.closed} closed`}
+          lead="We ask GitHub for recent pull requests and the contributor docs."
+          caption="Example: one square per PR, green merged, red closed"
           facts={[
-            ["PRs", "Up to 200 merged and 200 closed from the last 90 days, cut to the days both lists cover"],
-            ["Docs", "CONTRIBUTING.md (the guide), AI_POLICY.md, the PR template and the workflow files"],
-            ["Example", `${EX.name}: ${READ} PRs from the last ${EX.days} days`],
+            ["PRs", "Up to 200 merged and 200 closed, from the last 90 days at most"],
+            ["Docs", "CONTRIBUTING.md, AI_POLICY.md, the PR template and the workflow files"],
+            ["Example", `${EX.name}: ${READ} PRs, ${EX.read.merged} merged and ${EX.read.closed} closed, from the last ${EX.days} days`],
           ]}
         />
         <Rule2 />
@@ -77,12 +77,11 @@ export function How() {
           n={2}
           title="Split staff from outsiders"
           visual={<PixelGrid mode="outside" />}
-          lead="We keep the PRs from outsiders and drop the ones from staff and bots."
-          caption="Example: staff and bot PRs dim, outside PRs stay lit"
+          lead="We keep PRs from outsiders and drop PRs from staff and bots."
+          caption="Example: outside PRs stay lit"
           facts={[
-            ["Staff", "Anyone who pressed merge on PRs here, plus anyone GitHub lists as owner, member or collaborator"],
-            ["Outsiders", "Everyone else, minus bots"],
-            ["Example", `${EX.name}: ${EX.outside.merged + EX.outside.closed} of the ${READ} PRs came from outsiders, ${EX.outside.merged} merged and ${EX.outside.closed} closed`],
+            ["Staff", "Anyone who merged PRs here, and anyone GitHub lists as owner, member or collaborator"],
+            ["Example", `${EX.name}: ${EX.outside.merged + EX.outside.closed} outside PRs, ${EX.outside.merged} merged and ${EX.outside.closed} closed`],
           ]}
         />
         <Rule2 />
@@ -90,14 +89,13 @@ export function How() {
           n={3}
           title="Find the newcomers"
           visual={<Outcomes />}
-          lead="Newcomers are outsiders who had no merged PR in this repo before the days we read. Each one goes into one of three groups."
+          lead="Newcomers are outsiders with no merged PR here before the days we read. The table puts each PR in one group: the first row that fits wins."
           caption={`Example: ${EX.name}, ${TRIED} newcomers`}
           facts={[
             ["How we know", "One GitHub search per author"],
-            ["Groups", "Merged, rejected or stuck. The first row that fits in the table decides"],
+            ["Once each", `One person counts once, with their best ending: ${BEST_FIRST[0]} beats ${BEST_FIRST[1]}, ${BEST_FIRST[1]} beats ${BEST_FIRST[2]}`],
             ["Not counted", "PRs the author closed. They say nothing about maintainers"],
-            ["Once each", `Each newcomer counts once, with their best ending: ${BEST_FIRST[0]} beats ${BEST_FIRST[1]}, ${BEST_FIRST[1]} beats ${BEST_FIRST[2]}`],
-            ["Deadline", `The time 9 in 10 merged outside PRs took to merge. Example: ${EX.stuckAfterDays} days for ${EX.name}`],
+            ["Stuck", `Open longer than 9 in 10 merged outside PRs took. Example: ${EX.stuckAfterDays} days for ${EX.name}`],
           ]}
         >
           <Table compact ordered head={["How the PR ended", "Group", "Source"]} rows={OUTCOME_ROWS} cols="md:grid-cols-[1fr_8rem_6rem]" />
@@ -106,16 +104,15 @@ export function How() {
         <Step
           n={4}
           title="Ask Jev"
-          lead="Some facts sit in text, like the guide and PR comments. Jev reads that text and answers the same set of questions each time."
+          lead="Some facts sit in text: the guide, and the last comments on closed PRs. Jev reads that text and answers fixed questions."
           visual={<Question />}
           facts={[
-            ["Jev", "The classifier TypeSafe makes. It picks one answer and says how sure it is. It writes no text"],
-            ["Questions", "Three kinds: yes or no, pick one option, give one rating"],
+            ["Jev", "TypeSafe's classifier. It picks one answer and says how sure it is. It writes no text"],
+            ["Questions", "Yes or no, pick one option, or give one rating"],
             ["Yes", "Counts when Jev is 70% sure or more"],
-            ["Example", `${EX.name}: ${QUESTIONS} questions in 5 requests`],
           ]}
         >
-          <p className="mb-3 text-xs text-muted-foreground">Example: the 5 requests for {EX.name}</p>
+          <p className="mb-3 text-xs text-muted-foreground">Example: {EX.name} took 5 requests and {QUESTIONS} questions</p>
           <Table head={["Request", "Jev reads", "We ask", "Questions"]} rows={REQUESTS.map((r) => [r.name, r.reads, r.asks, r.count])} cols="md:grid-cols-[9rem_1fr_1fr_5rem]" />
         </Step>
         <Rule2 />
@@ -125,21 +122,20 @@ export function How() {
           lead="The odds are the share of newcomers who got merged, adjusted for small samples."
           visual={<Sum />}
           facts={[
-            ["Formula", "(merged + 1) ÷ (tried + 2). The +1 and +2 add one merged PR and one unmerged PR, so 3 lucky PRs do not read as 100%"],
-            ["Range", `Fewer newcomers, wider range. We are 90% sure the real odds sit inside it (Wilson interval). Example: ${TRIED} newcomers gives ${EX.range[0]}% to ${EX.range[1]}%`],
-            ["From Jev", `PRs merged another way count as merged. PRs the author closed do not count. Example: 0 and ${EX.withdrawn} of the 60 closed outside PRs Jev read for ${EX.name}`],
+            ["Formula", "(merged + 1) ÷ (tried + 2). The +1 and +2 stop 3 lucky PRs from reading as 100%"],
+            ["Range", `We are 90% sure the true odds sit inside it (Wilson interval). Example: ${EX.range[0]}% to ${EX.range[1]}%`],
           ]}
         />
         <Rule2 />
         <Step
           n={6}
           title="Grade and decide"
-          lead="Two tables, the same for each repo, turn the numbers into six grades and one verdict."
+          lead="Two fixed tables turn the numbers into six grades and one verdict."
           visual={<Grades />}
           caption={`Example: the six grades for ${EX.name}`}
           facts={[
-            ["Grades", "Six numbers, each graded A to F by the first table. Below the D mark means F"],
-            ["Verdict", "The first row that fits in the second table wins. It uses the odds and Jev's answers. No AI writes it"],
+            ["Grades", "The cut-off table. Past the D bar is F"],
+            ["Verdict", "The verdict table. The first row that fits wins. Plain code picks it, not Jev"],
           ]}
         >
           <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">

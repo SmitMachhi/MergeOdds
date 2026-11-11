@@ -8,14 +8,12 @@ import type { Grade } from "../../shared/types";
 // One real check, used as the running example on this page: vitejs/vite on 10 November 2026.
 // Every number below, the question counts in REQUESTS and the question in <Question> come from that single run.
 // To change the example, run one check of the new repo and replace all of them together.
-// `outside` is what GitHub shows before Jev reads anything. Of those 82 closed PRs, the author closed 11.
 export const EX = {
   repo: "vitejs/vite",
   name: "Vite",
   days: 34,
   read: { merged: 152, closed: 93 },
   outside: { merged: 30, closed: 82 },
-  withdrawn: 11,
   newcomers: { merged: 26, rejected: 46, stuck: 21 },
   stuckAfterDays: 25,
   odds: 28,
