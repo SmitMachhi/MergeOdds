@@ -8,7 +8,7 @@ import { BRAND } from "@/lib/ui";
 import { BEST_FIRST, OUTCOMES } from "../../shared/outcomes";
 import { CUTS, VERDICTS } from "../../shared/rules";
 
-// The How it works page: one check in six steps, with the numbers of one real check (how-visuals.tsx).
+// The How it works page: the check in six steps, with the numbers from our Vite check (how-visuals.tsx).
 // This is the one page that names Jev: it exists to say how the app works.
 
 // The five Jev requests of that check, with its question counts. Vite has no AI policy file and no workflow
@@ -35,7 +35,7 @@ const OUTCOME_ROWS = OUTCOMES.map((o) => [o.when, o.end ? GROUP[o.end] : "Not co
 const LIMITS = [
   "On busy repos, the 400 PRs we read can span 2 days",
   "Under 10 newcomers, the range is wide",
-  "Jev can answer one borderline case two ways on two runs",
+  "On borderline cases, Jev's answer can change from run to run",
   "Jev reads the newest 60 closed outside PRs. Older PRs the author closed still count as rejected",
   "We keep each result for 7 days, so numbers can be 7 days old",
 ];
@@ -55,7 +55,7 @@ export function How() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={enter} className="pt-12 pb-8">
           <h1 className="text-4xl font-medium tracking-tight sm:text-6xl">How it works</h1>
           <p className="mt-4 max-w-prose leading-7 text-pretty text-muted-foreground">
-            One check takes 4 to 7 seconds. Lines marked Example come from one real check of {EX.repo}, on 10 November 2026.
+            Checks take 4 to 7 seconds. Lines marked Example come from our check of {EX.repo} on 10 November 2026.
           </p>
         </motion.div>
 
@@ -65,7 +65,7 @@ export function How() {
           title="Fetch the repo"
           visual={<PixelGrid mode="read" />}
           lead="We ask GitHub for recent pull requests and the contributor docs."
-          caption="Example: one square per PR, green merged, red closed"
+          caption="Example: squares are PRs, green merged, red closed"
           facts={[
             ["PRs", "Up to 200 merged and 200 closed, from the last 90 days at most"],
             ["Docs", "CONTRIBUTING.md, AI_POLICY.md, the PR template and the workflow files"],
@@ -89,11 +89,11 @@ export function How() {
           n={3}
           title="Find the newcomers"
           visual={<Outcomes />}
-          lead="Newcomers are outsiders with no merged PR here before the days we read. The table puts each PR in one group: the first row that fits wins."
+          lead="Newcomers are outsiders with no merged PR here before the days we read. The table sorts their PRs into groups: the first row that fits wins."
           caption={`Example: ${EX.name}, ${TRIED} newcomers`}
           facts={[
-            ["How we know", "One GitHub search per author"],
-            ["Once each", `One person counts once, with their best ending: ${BEST_FIRST[0]} beats ${BEST_FIRST[1]}, ${BEST_FIRST[1]} beats ${BEST_FIRST[2]}`],
+            ["How we know", "We search GitHub for each author's earlier merged PRs"],
+            ["Once each", `Each person counts once, with their best ending: ${BEST_FIRST[0]} beats ${BEST_FIRST[1]}, ${BEST_FIRST[1]} beats ${BEST_FIRST[2]}`],
             ["Not counted", "PRs the author closed. They say nothing about maintainers"],
             ["Stuck", `Open longer than 9 in 10 merged outside PRs took. Example: ${EX.stuckAfterDays} days for ${EX.name}`],
           ]}
@@ -107,8 +107,8 @@ export function How() {
           lead="Some facts sit in text: the guide, and the last comments on closed PRs. Jev reads that text and answers fixed questions."
           visual={<Question />}
           facts={[
-            ["Jev", "TypeSafe's classifier. It picks one answer and says how sure it is. It writes no text"],
-            ["Questions", "Yes or no, pick one option, or give one rating"],
+            ["Jev", "TypeSafe's classifier. It picks the answer and says how sure it is. It writes no text"],
+            ["Questions", "Yes or no, multiple choice, or ratings"],
             ["Yes", "Counts when Jev is 70% sure or more"],
           ]}
         >
@@ -130,9 +130,9 @@ export function How() {
         <Step
           n={6}
           title="Grade and decide"
-          lead="Two fixed tables turn the numbers into six grades and one verdict."
+          lead="Fixed tables turn the numbers into grades and the verdict."
           visual={<Grades />}
-          caption={`Example: the six grades for ${EX.name}`}
+          caption={`Example: ${EX.name}'s grades`}
           facts={[
             ["Grades", "The cut-off table. Past the D bar is F"],
             ["Verdict", "The verdict table. The first row that fits wins. Plain code picks it, not Jev"],
