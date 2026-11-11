@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { DitherButton } from "@/components/dither-kit";
 import { Frame } from "@/components/frame";
 import { Rule2 } from "@/components/card";
+import { SourceLink } from "@/components/source-link";
 import { enter, Reveal, Step, Table } from "@/components/how-layout";
 import { EX, Grades, Outcomes, PixelGrid, Question, READ, Sum, TRIED } from "@/components/how-visuals";
 import { BRAND } from "@/lib/ui";
@@ -49,7 +50,10 @@ export function How() {
             <img src="/favicon.svg" alt="" className="size-4" />
             Merge Odds
           </a>
-          <a href="/" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Check repos</a>
+          <div className="flex items-center gap-5">
+            <a href="/" className="text-sm text-muted-foreground transition-colors hover:text-foreground">Check repos</a>
+            <SourceLink />
+          </div>
         </header>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={enter} className="pt-12 pb-8">

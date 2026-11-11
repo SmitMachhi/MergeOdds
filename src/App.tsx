@@ -5,6 +5,7 @@ import { Frame } from "@/components/frame";
 import { Loading } from "@/components/loading";
 import { PrMark } from "@/components/pr-mark";
 import { Report } from "@/components/report";
+import { SourceLink } from "@/components/source-link";
 import { BRAND, fetchAnalysis } from "@/lib/ui";
 import { useSettled } from "@/lib/use-settled";
 import { cn } from "@/lib/utils";
@@ -97,6 +98,8 @@ export default function App() {
   return (
     <Frame>
       <main data-state={stateName(check)} className="relative mx-auto flex min-h-svh max-w-5xl flex-col px-4">
+        {/* In line with the home link on a report page */}
+        <SourceLink className="absolute top-6 right-4 lg:h-[3.125rem]" />
         <motion.div layout transition={spring} className={cn("relative", idle ? "my-auto py-16" : "pt-6 pb-8")}>
           {/* The way home from a report. Beside the repo box on a wide screen, in a row of its own above it on a narrow one. */}
           <AnimatePresence mode="popLayout">
