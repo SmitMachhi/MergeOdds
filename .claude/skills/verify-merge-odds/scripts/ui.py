@@ -30,7 +30,7 @@ SUBMIT = 'button[type="submit"]'  # the "Check" button
 ALERT = '[role="alert"]'
 VERDICTS = ["Closed door", "Go for it", "Worth a shot", "Tough crowd", "Too quiet to call", "Archived", "No pulse"]
 SCORECARD = ["Newcomer merge rate", "First reply", "Time to merge", "Left hanging", "They say why", "Contributing guide"]
-STEPS = ["Fetch the repo", "Split staff from outsiders", "Find the newcomers", "Ask Jev", "Do the sum", "Grade and decide"]
+STEPS = ["Read the recent PRs", "Keep the outside PRs", "Read why PRs closed", "Sort the newcomers", "Work out the odds", "Grade the repo"]
 
 problems = []
 saved = []

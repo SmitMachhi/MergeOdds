@@ -18,8 +18,8 @@ export function Reveal({ delay = 0, className, children }: { delay?: number; cla
   );
 }
 
-/** A step is a numbered title, one plain sentence, a short list of facts, one visual, and an optional full-width
- *  table under both. The titles and the sentences alone tell the whole story. The Example row holds the numbers
+/** A step is a numbered title, a short paragraph, a list of facts, a visual, and an optional full-width table
+ *  under both. The titles and the paragraphs alone tell the whole story. The Example row holds the numbers
  *  of the example check, so it reads in the main text colour. */
 export function Step({ n, title, lead, facts, visual, caption, children }: { n: number; title: string; lead: string; facts: [string, ReactNode][]; visual: ReactNode; caption?: string; children?: ReactNode }) {
   return (
