@@ -96,6 +96,7 @@ uses, for when you add a journey:
 | Repo avatar on a report | `main header img` |
 | The two tables on `/how` whose rows arrive in order, and their rows | `[data-ordered]`, `[data-row]` |
 | "Check repos" link on that page | `header a[href="/"]` |
+| Source link with the live star count, top right of each page | `a[href="https://github.com/SmitMachhi/MergeOdds"]` |
 | Deep link to a report | `/?repo=owner/name` |
 
 `browser-use` drives the user's own browser over its debug port. If it reports `DevToolsActivePort not found`,
